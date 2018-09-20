@@ -1,0 +1,469 @@
+openapi: 3.0.0
+info:
+  description: This is a METACOIN API.
+  version: '0.3'
+  title: Metacoin API
+  termsOfService: 'http://metacoin.network/terms/'
+tags:
+  - name: Address
+    description: Metacoin Address and balance
+  - name: Balance
+    description: Get Metacoin or Token Balance
+  - name: Block
+    description: Block information
+  - name: Transfer
+    description: Metacoin or Token transfer
+  - name: Token
+    description: Token information
+servers:
+  - url: 'https://api.metacoin.network/v1'
+
+paths:
+  /address:
+    post:
+      tags:
+        - Address
+      summary: Create new Adderess
+      description: >
+        # Warning!!
+
+        An RSA private key that is paired with the RSA public key is used to
+        authorize the transfer.
+
+        When you make your wallet, please keep the Private Key that is paired
+        with the Public Key you sent in a safe place. 
+
+        If you lose your private key, you can not claim your wallet.
+
+        RSA Key is RSA-SHA512 and base64 format.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - key
+              properties:
+                key:
+                  type: string
+                  format: base64 encoding
+                  description: RSA Public key for signing
+                addinfo:
+                  type: string
+                  description: Address memo
+        required: true
+      responses:
+        '200':
+          description: successful operation
+          content:
+            '*/*':
+              schema:
+                type: string
+                format: Metacoin Address
+                description: new Metacoin address
+        '405':
+          description: Missing or invalid RSA key
+  '/address/{address}':
+    get:
+      tags:
+        - Address
+      summary: Get address status
+      parameters:
+        - name: address
+          in: path
+          description: Metacoin address
+          required: true
+          schema:
+            type: string
+            format: Metacoin Address
+      responses:
+        '200':
+          description: successful operation
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/address'
+        '404':
+          description: Address not found
+  '/balance/{address}/{token}':
+    get:
+      tags:
+        - Balance
+      summary: Get balance of address
+      parameters:
+        - name: address
+          in: path
+          description: Metacoin address
+          required: true
+          schema:
+            type: string
+            format: metacoin address
+        - name: token
+          in: path
+          description: Metacoin token id
+          required: true
+          schema:
+            type: string
+            format: int32
+      responses:
+        '200':
+          description: successful operation
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/balance'
+        '404':
+          description: Address not found
+        '405':
+          description: Token not found
+  '/block':
+    get:
+      tags:
+        - Block
+      summary: Get last block info
+      responses:
+        '200':
+          description: successful operation
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/Block'
+  '/block/{block}':
+    get:
+      tags:
+        - Block
+      summary: Get Block info and Transaction ID in block
+      parameters:
+        - name: block
+          in: path
+          description: Block number or Block HASH
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/Block'
+        '404':
+          description: Block not found
+  '/getkey/{types}/{keys}':
+    get:
+      tags:
+      - Transfer
+      summary: Get Temprary key for Transfer, Dapp Create or Token Create.
+      description: |
+        transfer type ttl - 10 sec
+        token type ttl - 3600 sec
+        dapp type ttl - 3600 sec
+      parameters:
+        - name: types
+          in: path
+          description: Temprary key type
+          required: true
+          schema:
+            type: string
+            enum:
+              - transfer
+              - token
+              - dapp
+        - name: keys
+          in: path
+          required: true
+          description: >
+            Diffrent for type.
+            transfer - address
+            dapp - Initional string(json format)
+            token - Token create data json format
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            '*/*':
+              schema:
+                type: object
+                properties:
+                  transaction_id:
+                    type: string
+                    description: Temprary Transaction ID
+        '400':
+          description: type value is invalid
+  '/token/{token}':
+    get:
+      tags:
+        - Token
+      summary: Get Token info
+      parameters:
+        - name: token
+          in: path
+          description: Token ID
+          required: true
+          schema:
+            type: string
+            format: int32
+      responses:
+        '200':
+          description: successful operation
+          content:
+            '*/*':
+              schema:
+               $ref: '#/components/schemas/Token'
+        '404':
+          description: Token not found
+  '/token':
+    post:
+      tags:
+        - Token
+      summary: Token Create
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Token'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            '*/*':
+              schema:
+                type: object
+                properties:
+                  transaction_id:
+                    type: string
+                    description: Transaction ID
+  '/transfer':
+    post:
+      tags:
+        - Transfer
+      summary: Transfer Metacoin or Token
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Transfer'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            '*/*':
+              schema:
+                type: object
+                properties:
+                  transaction_id:
+                    type: string
+                    description: Transaction ID
+        '400':
+          description: insufficient balance
+        '404':
+          description: Address not found
+  '/transaction/{transaction_id}':
+    get:
+      tags:
+        - Transaction
+      summary: Get Transaction info
+      parameters:
+        - name: transaction_id
+          in: path
+          description: Transaction ID
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '404':
+          description: Transaction not found
+components:
+  schemas:
+    address:
+      type: object
+      properties:
+        address:
+          type: string
+          format: metacoin address
+        createdate:
+          type: integer
+          format: int32
+          description: Unix Timesamp(UTC)
+        balance:
+          type: array
+          items:
+            $ref: '#/components/schemas/balance'
+    balance:
+      type: object
+      properties:
+        token:
+          type: string
+          format: int64
+        balance:
+          type: string
+          format: int64
+        unlockdate:
+          description: Unix Timesamp(UTC) of withdrawal
+          type: integer
+          format: int32
+    Block:
+      type: object
+      properties:
+        sn:
+          type: integer
+          format: int64
+          description: Block number
+        id:
+          type: string
+        timestamp:
+          type: integer
+          format: int32
+        transaction:
+          type: array
+          items:
+            type: string
+    Transaction:
+      type: object
+      properties:
+        from:
+          type: string
+          format: Metacoin Address
+        to:
+          type: string
+          format: Metacoin Address
+        amount:
+          type: string
+          format: int64
+        type:
+          type: string
+          enum:
+            - address_create
+            - transfer
+            - deposit
+            - token_create
+            - dapp_call
+        token:
+          type: string
+          format: int32
+          description: 0 == MetaCoin
+        dppid:
+          type: string
+          description: DApp ID or null string
+        dappfunction:
+          type: string
+          description: DApp ID or null string
+        parameters:
+          type: array
+          items:
+            type: string
+          description: Diffrent value by type
+    Transfer:
+      type: object
+      properties:
+        from:
+          type: string
+          format: Metacoin Address
+          description: Withdraw address
+        to:
+          type: string
+          format: Metacoin Address
+          description: Deposit Address
+        token:
+          type: integer
+          description: 'Token ID, if 0 then Transfer Metacoin'
+        amount:
+          description: Transfer amount Metacoin or Token
+          type: string
+          format: integer
+        temprarykey:
+          type: string
+          description: Temprary key for singning - using only transfer, not recording
+        signature:
+          type: string
+          format: base64 encoding
+          description: |
+            RSA sign for concat from, to, token, amount
+            ex) rsa_sing(from +'|'+ to +'|'+ token +'|'+ amount+'|' + TempraryKey)
+    Token:
+      type: object
+      properties:
+        owner:
+          description: Token Creator
+          type: string
+        symbol:
+          description: Token Symbol
+          type: string
+        createdate:
+          description: Token Create Date - ignore for token create.
+          type: integer
+          format: UnixTimestamp (UTC)
+        totalsupply:
+          description: Total amount
+          type: string
+          format: decimal
+        reservedamount:
+          description: Reserve token amount for owner
+          type: string
+          format: decimal
+        remainamount:
+          description: Remain amount - ignore for token create.
+          type: string
+          format: decimal
+        token:
+          description: Token ID
+          type: integer
+        name:
+          description: Token name
+          type: string
+        category:
+          description: Token Category
+          type: string
+        status:
+          description: Token status
+          type: string
+        decimals:
+          description: Token status
+          type: integer
+        tier:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tier'
+        url:
+          description: Token Creator URL
+          type: string
+        temprarykey:
+          type: string
+          description: Temprary key for singning - using only transfer, not recording
+        signature:
+          type: string
+          format: base64 encoding
+          description: |
+            RSA sign for data.
+            ex) rsa_sing(owner +'|'+ symbol +'|'+ token +'|'+name+'|'+url + '|'+temprarykey)
+    Tier:
+      type: object
+      properties:
+        startdate:
+          type: integer
+          format: UnixTimestamp (UTC)
+        enddate:
+          type: integer
+          format: UnixTimestamp (UTC)
+        supply:
+          type: string
+        rate:
+          type: integer
+          description: Quantity of tokens available for 1 Metacoin
+        name:
+          type: string
+        investormin:
+          type: string
+          format: string
+          description: investor minimum capacity
+        remainamount:
+          type: string
+          format: string
