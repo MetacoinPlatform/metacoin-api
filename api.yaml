@@ -1,9 +1,11 @@
 openapi: 3.0.0
 info:
-  description: This is a METACOIN API.
-  version: '0.3'
+  version: '1.0'
   title: Metacoin API
   termsOfService: 'http://metacoin.network/terms/'
+  description: >
+    This document is contain Metacoin API reference.
+
 tags:
   - name: Address
     description: Metacoin Address and balance
@@ -15,11 +17,36 @@ tags:
     description: Metacoin or Token transfer
   - name: Token
     description: Token information
+  - name: MRC020
+    description: Can publish saved data after a specific request or after a certain time.
+  - name: MRC040
+    description: DEX Token Exchange Protocol for STO
+  - name: MRC100
+    description: >
+      - Extra function support Token for GAME
+
+      - *This token require approve by Inblock.*
+
+  - name: MRC200
+    description: >
+      - Extra function support Token for Entertainment
+
+      - *This token require approve by Inblock.*
+
+  - name: MRC300
+    description: >
+      - Extra function support Token for Vehicle
+
+      - *This token require approve by Inblock.*
+
 servers:
-  - url: 'https://api.metacoin.network/v1'
+  - url: 'http://testnetrest.metacoin.network:20922'
+    description: TESTnet API endpoint
+  - url: 'http://rest.metacoin.network:20922'
+    description: Mainnet API endpoint
 
 paths:
-  /address:
+  '/address':
     post:
       tags:
         - Address
@@ -27,27 +54,25 @@ paths:
       description: >
         # Warning!!
 
-        An RSA private key that is paired with the RSA public key is used to
-        authorize the transfer.
+        - An ECDSA private key that is paired with the ECDSA public key is used to authorize the transfer.
 
-        When you make your wallet, please keep the Private Key that is paired
-        with the Public Key you sent in a safe place. 
+        - When you make your wallet, please keep the Private Key that is paired with the Public Key you sent in a safe place.
 
-        If you lose your private key, you can not claim your wallet.
+        - If you lose your private key, you can not claim your wallet.
 
-        RSA Key is RSA-SHA512 and base64 format.
+        - ECDSA curve is secp384r1 or secp521r1.
       requestBody:
         content:
           application/json:
             schema:
               type: object
               required:
-                - key
+                - publickey
               properties:
-                key:
+                publickey:
                   type: string
-                  format: base64 encoding
-                  description: RSA Public key for signing
+                  format: pem encoding
+                  description: ECDSA Public key for signing
                 addinfo:
                   type: string
                   description: Address memo
@@ -63,6 +88,7 @@ paths:
                 description: new Metacoin address
         '405':
           description: Missing or invalid RSA key
+
   '/address/{address}':
     get:
       tags:
@@ -85,6 +111,7 @@ paths:
                 $ref: '#/components/schemas/address'
         '404':
           description: Address not found
+
   '/balance/{address}/{token}':
     get:
       tags:
@@ -116,6 +143,7 @@ paths:
           description: Address not found
         '405':
           description: Token not found
+
   '/block':
     get:
       tags:
@@ -128,6 +156,7 @@ paths:
             '*/*':
               schema:
                 $ref: '#/components/schemas/Block'
+
   '/block/{block}':
     get:
       tags:
@@ -149,19 +178,21 @@ paths:
                 $ref: '#/components/schemas/Block'
         '404':
           description: Block not found
-  '/getkey/{types}/{keys}':
+
+  '/getkey/{types}/{address}':
     get:
       tags:
       - Transfer
-      summary: Get Temprary key for Transfer, Dapp Create or Token Create.
+      summary: 'Get Temprary key for Transfer, Dapp Create or Token Create.'
       description: |
-        transfer type ttl - 10 sec
-        token type ttl - 3600 sec
-        dapp type ttl - 3600 sec
+        - transfer type ttl - 10 sec
+        - mrc040 type ttl - 10 sec
+        - token type ttl - 3600 sec
+        - dapp type ttl - 3600 sec
       parameters:
         - name: types
           in: path
-          description: Temprary key type
+          description: Temprary key type or usage
           required: true
           schema:
             type: string
@@ -169,14 +200,12 @@ paths:
               - transfer
               - token
               - dapp
-        - name: keys
+              - mrc040
+        - name: address
           in: path
           required: true
           description: >
-            Diffrent for type.
-            transfer - address
-            dapp - Initional string(json format)
-            token - Token create data json format
+            temprarykey owner address
           schema:
             type: string
       responses:
@@ -189,9 +218,10 @@ paths:
                 properties:
                   transaction_id:
                     type: string
-                    description: Temprary Transaction ID
+                    description: Temprary key for transaction
         '400':
           description: type value is invalid
+
   '/token/{token}':
     get:
       tags:
@@ -211,14 +241,15 @@ paths:
           content:
             '*/*':
               schema:
-               $ref: '#/components/schemas/Token'
+                $ref: '#/components/schemas/Token'
         '404':
           description: Token not found
+
   '/token':
     post:
       tags:
         - Token
-      summary: Token Create
+      summary: Token save
       requestBody:
         content:
           application/json:
@@ -234,7 +265,188 @@ paths:
                 properties:
                   transaction_id:
                     type: string
-                    description: Transaction ID
+                    description: Token generation Auth key.
+
+  '/token/{tkey}':
+    post:
+      tags:
+        - Token
+      summary: Token create
+      parameters:
+        - name: tkey
+          in: path
+          description: Token generation Auth key(return value of POST /token)
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          "*/*":
+            schema:
+              type: object
+              properties:
+                signature:
+                  type: string
+                  format: base64
+                  description: >
+                    - ECDSA sign for concat token.owner, token.name, tkey
+
+                    - ex) ecdsa_sing(token.owner + '|' + token.name + '|' + tkey)
+        required: true
+      responses:
+        '200':
+          description: successful create token.
+        '400':
+          description: token create error.
+
+  '/tokenUpdate/TokenBase/{tkey}/{tokenID}/{baseTokenID}':
+    post:
+      tags:
+        - Token
+      summary: Set or Remove BaseToken for MRC040
+      description: >
+        - Set base token id for transactions using MRC040
+
+        - You have to register your token in the target with the token specified by basetoken.
+
+        - If this value is changed, all transactions waited can no longer be traded.
+      parameters:
+        - name: tkey
+          in: path
+          description: Token generation Auth key(return value of POST /token)
+          required: true
+          schema:
+            type: string
+        - name: tokenID
+          in: path
+          description: Token ID
+          required: true
+          schema:
+            type: string
+        - name: baseTokenID
+          in: path
+          description: Base Token ID, If it is 0, basetoken is deleted.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          "*/*":
+            schema:
+              type: object
+              properties:
+                signature:
+                  type: string
+                  format: base64
+                  description: >
+                    - ECDSA sign for concat Address of Token owner, tokenID, tkey
+
+                    - ex) ecdsa_sing(Address of Token owner + '|' + tokenID + '|' + tkey)
+        required: true
+      responses:
+        '200':
+          description: successful create token.
+        '400':
+          description: token create error.
+
+  '/tokenUpdate/TokenTargetAdd/{tkey}/{tokenID}/{targetTokenSN}':
+    post:
+      tags:
+        - Token
+      summary: Add TargetToken for MRC040
+      description: >
+        - Set target token id for transactions using MRC040
+
+        - You have to register your token in the basetoken with the token specified by targettoken.
+
+        - If this value is changed, all transactions waited can no longer be traded.
+      parameters:
+        - name: tkey
+          in: path
+          description: Token generation Auth key(return value of POST /token)
+          required: true
+          schema:
+            type: string
+        - name: tokenID
+          in: path
+          description: Token ID
+          required: true
+          schema:
+            type: string
+        - name: targetTokenSN
+          in: path
+          description: Target Token ID for add
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          "*/*":
+            schema:
+              type: object
+              properties:
+                signature:
+                  type: string
+                  format: base64
+                  description: >
+                    - ECDSA sign for concat Address of Token owner, targetTokenID, tkey
+
+                    - ex) ecdsa_sing(Address of Token owner + '|' + targetTokenID + '|' + tkey)
+        required: true
+      responses:
+        '200':
+          description: successful create token.
+        '400':
+          description: token create error.
+
+  '/tokenUpdate/TokenTargetRemove/{tkey}/{tokenID}/{targetTokenSN}':
+    post:
+      tags:
+        - Token
+      summary: Remove TokenID in TargetToken of token
+      description: >
+        - Set target token id for transactions using MRC040
+
+        - If the value of basetoken is TokenID and the value of targettoken is targetTokenSN, no longer trade.
+      parameters:
+        - name: tkey
+          in: path
+          description: Token generation Auth key(return value of POST /token)
+          required: true
+          schema:
+            type: string
+        - name: tokenID
+          in: path
+          description: Token ID
+          required: true
+          schema:
+            type: string
+        - name: targetTokenSN
+          in: path
+          description: Target Token ID for remove
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          "*/*":
+            schema:
+              type: object
+              properties:
+                signature:
+                  type: string
+                  format: base64
+                  description: >
+                    - ECDSA sign for concat Address of Token owner, targetTokenID, tkey
+
+                    - ex) ecdsa_sing(Address of Token owner + '|' + targetTokenID + '|' + tkey)
+        required: true
+      responses:
+        '200':
+          description: successful create token.
+        '400':
+          description: token create error.
+
   '/transfer':
     post:
       tags:
@@ -260,6 +472,7 @@ paths:
           description: insufficient balance
         '404':
           description: Address not found
+
   '/transaction/{transaction_id}':
     get:
       tags:
@@ -281,6 +494,187 @@ paths:
                 $ref: '#/components/schemas/Transaction'
         '404':
           description: Transaction not found
+
+  '/mrc020':
+    post:
+      tags:
+        - MRC020
+      summary: NEW MRC-020 data create
+      description: >
+        *** Warning - TESTNET only ***
+
+        - concat owner, referencekey is must be unique.
+
+        - if duplication raise error.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MRC020'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            '*/*':
+              schema:
+                type: object
+                properties:
+                  transaction_id:
+                    type: string
+                    description: Transaction ID
+        '400':
+          description: MRC-020 Create error
+
+  '/mrc020/{mrc020key}':
+    get:
+      tags:
+        - MRC020
+      summary: Get MRC-020 data
+      description: >
+        *** Warning - TESTNET only ***
+
+        - If the time at the time of the call is before opendate, the value of the Publickey is empty.
+
+        - If it is after opendate, then publickey is returned.
+
+      parameters:
+        - name: mrc020key
+          in: path
+          description: >
+            MRC-020 key ('MRC020_' + owner + '_' + referencekey)
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: MRC-020 data
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/MRC020GET'
+        '400':
+          description: MRC-020 data not exists.
+
+  '/mrc040/create/{tkey}':
+    post:
+      tags:
+        - MRC040
+      summary: Create new TOKEN Exchange job
+      description: >
+        *** Warning - TESTNET only ***
+
+      parameters:
+        - name: tkey
+          in: path
+          description: MRC040 generation Auth key(return value of POST /getkey)
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MRC040'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/MRC040RESPONSE'
+        '405':
+          description: Missing or invalid RSA key
+
+  '/mrc040/cancel/{tkey}':
+    post:
+      tags:
+        - MRC040
+      summary: Delete(Cancel) TOKEN exchange job
+      description: >
+        *** Warning - TESTNET only ***
+
+      parameters:
+        - name: itemkey
+          in: path
+          description: MRC040 Item key
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MRC040DELETE'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            '*/*':
+              schema:
+                type: string
+                format: Transaction ID
+                description: cancel exchange Transaction ID
+        '405':
+          description: Missing or invalid RSA key
+
+  '/mrc040/exchange/{tkey}':
+    post:
+      tags:
+        - MRC040
+      summary: Token Exchange
+      description: >
+        *** Warning - TESTNET only ***
+
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MRC040EXCHANGE'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            '*/*':
+              schema:
+                type: string
+                format: Transaction ID
+                description: cancel exchange Transaction ID
+        '405':
+          description: Missing or invalid RSA key
+
+  '/mrc100/**HIDDEN**':
+    get:
+      tags:
+        - MRC100
+      summary: Token for Game
+      description: >
+        *Provide only MRC-100 token owner.*
+      responses:
+        '200':
+          description: successful operation
+
+  '/mrc200/**HIDDEN**':
+    get:
+      tags:
+        - MRC200
+      summary: Token for Entertainment
+      description: >
+        *Provide only MRC-200 token owner.*
+      responses:
+        '200':
+          description: successful operation
+
+  '/mrc300/**HIDDEN**':
+    get:
+      tags:
+        - MRC300
+      summary: Token for Entertainment
+      description: >
+        *Provide only MRC-300 token owner.*
+      responses:
+        '200':
+          description: successful operation
+
 components:
   schemas:
     address:
@@ -381,13 +775,161 @@ components:
           format: integer
         temprarykey:
           type: string
-          description: Temprary key for singning - using only transfer, not recording
+          description: 'Temprary key for singning - using only transfer, not recording'
         signature:
           type: string
           format: base64 encoding
+          description: >
+            - ECDSA sign for concat from, to, token, amount
+
+            - ex) ecdsa_sing(from +'|'+ to +'|'+ token +'|'+ amount+'|' + TempraryKey)
+    MRC020:
+      type: object
+      properties:
+        owner:
+          description: Token Creator
+          type: string
+        algorithm:
+          description: Data encryption algorithm
+          type: string
+        data:
+          description: Encrypted data(max 2048 bytes)
+          type: string
+          format: base64 encoding
+        publickey:
+          description: Key to use when decrypting encrypted data
+          type: string
+          format: pem encoding
+        opendate:
+          description: publickey public date and time
+          type: integer
+          format: UnixTimestamp (UTC)
+        referencekey:
+          description: Reference Key for your(max 64bytes)
+          type: string
+          format: A-Z, a-z, 0-9, _
+        signature:
+          type: string
+          format: base64 encoding
+          description: >
+            - ECDSA sign for data.
+
+            - ex) ecdsa_sing(owner +'|'+ data +'|'+ opendate +'|'+referencekey)
+    MRC020GET:
+      type: object
+      properties:
+        owner:
+          description: Token Creator
+          type: string
+        algorithm:
+          description: Data encryption algorithm
+          type: string
+        data:
+          description: Encrypted data(max 2048 bytes)
+          type: string
+          format: base64 encoding
+        publickey:
+          description: Key to use when decrypting encrypted data
+          type: string
+          format: pem encoding
+        createdate:
+          description: data create date
+          type: integer
+          format: UnixTimestamp (UTC)
+        opendate:
+          description: publickey public date and time
+          type: integer
+          format: UnixTimestamp (UTC)
+        referencekey:
+          description: Reference Key for your(max 64bytes)
+          type: string
+          format: A-Z, a-z, 0-9, _
+        is_open:
+          type: integer
+          description: >
+            - 0 : hide publickey
+            - 1 : show publickey
+    MRC040:
+      type: object
+      properties:
+        owner:
+          description: MRC040 Item Creator
+          type: string
+        side:
           description: |
-            RSA sign for concat from, to, token, amount
-            ex) rsa_sing(from +'|'+ to +'|'+ token +'|'+ amount+'|' + TempraryKey)
+            Target Token buy or sell
+
+            SELL : Target Token to Sell token
+
+            BUY : Sell token to Target token
+          type: string
+          enum:
+            - SELL
+            - BUY
+        basetoken:
+          description: Token ID, 0 means Metacoin
+          format: integer
+        targettoken:
+          description: Token ID
+          format: integer
+        price:
+          description: Unit Price, not total price.
+          format: decimal
+        qtt:
+          description: Quantity of SELL or BUY
+          format: decimal
+        signature:
+          type: string
+          format: base64 encoding
+          description: >
+            - ECDSA sign for data.
+
+            - ex) ecdsa_sing(owner +'|'+ basetoken +'|'+ targettoken +'|'+ Price + '|' + QTT + '|' + referencekey)
+    MRC040EXCHANGE:
+      type: object
+      properties:
+        requester:
+          description: Exchange Requester Address
+          type: string
+        mrc040id:
+          description: MRC040 Item Unique key
+          format: string
+        qtt:
+          description: Quantity of SELL or BUY
+          format: decimal
+        signature:
+          type: string
+          format: base64 encoding
+          description: >
+            - ECDSA sign for data.
+
+            - ex) ecdsa_sing(requester +'|'+ itemkey + '|' + qtt  + '|' + referencekey)
+    MRC040DELETE:
+      type: object
+      properties:
+        owner:
+          description: MRC040 Item creator
+          type: string
+        mrc040id:
+          description: MRC040 Item Unique key
+          format: string
+        signature:
+          type: string
+          format: base64 encoding
+          description: >
+            - ECDSA sign for data.
+
+            - ex) ecdsa_sing(owner +'|'+ MRC040 Item Unique Key + '|' + referencekey)
+    MRC040RESPONSE:
+      type: object
+      properties:
+        mrc040id:
+          description: MRC040 Unique KEY
+          type: string
+        txid:
+          type: string
+          format: Transaction ID
+          description: cancel exchange Transaction ID
     Token:
       type: object
       properties:
@@ -437,13 +979,14 @@ components:
           type: string
         temprarykey:
           type: string
-          description: Temprary key for singning - using only transfer, not recording
+          description: 'Temprary key for singning - using only transfer, not recording'
         signature:
           type: string
           format: base64 encoding
-          description: |
-            RSA sign for data.
-            ex) rsa_sing(owner +'|'+ symbol +'|'+ token +'|'+name+'|'+url + '|'+temprarykey)
+          description: >
+            - ECDSA sign for data.
+
+            - ex) ecdsa_sing(owner +'|'+ symbol +'|'+ token +'|'+name+'|'+url +'|'+temprarykey)
     Tier:
       type: object
       properties:
