@@ -27,3 +27,7 @@ description: Token(MRC010) Create, update, mint, burn
 {% swagger src="../../.gitbook/assets/api.yaml" path="/token/update/{tkey}" method="put" %}
 [api.yaml](../../.gitbook/assets/api.yaml)
 {% endswagger %}
+
+{% swagger src="../../.gitbook/assets/api.yaml" path="/token/sell/{mrc010id}" method="post" %}
+[api.yaml](../../.gitbook/assets/api.yaml)
+{% endswagger %}
