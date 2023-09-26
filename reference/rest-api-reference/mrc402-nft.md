@@ -106,11 +106,11 @@ It helps you to be more creative.
 [api.yaml](../../.gitbook/assets/api.yaml)
 {% endswagger %}
 
-{% swagger src="../../.gitbook/assets/api.yaml" path="/mrc402/sell" method="post" %}
+{% swagger src="../../.gitbook/assets/api.yaml" path="/mrc402/sell/{mrc402id}" method="post" %}
 [api.yaml](../../.gitbook/assets/api.yaml)
 {% endswagger %}
 
-{% swagger src="../../.gitbook/assets/api.yaml" path="/mrc402/unsell" method="post" %}
+{% swagger src="../../.gitbook/assets/api.yaml" path="/mrc402/unsell/{mrc402_dex_id}" method="post" %}
 [api.yaml](../../.gitbook/assets/api.yaml)
 {% endswagger %}
 
@@ -122,11 +122,11 @@ It helps you to be more creative.
 [api.yaml](../../.gitbook/assets/api.yaml)
 {% endswagger %}
 
-{% swagger src="../../.gitbook/assets/api.yaml" path="/mrc402/auction" method="post" %}
+{% swagger src="../../.gitbook/assets/api.yaml" path="/mrc402/auction/{mrc402id}" method="post" %}
 [api.yaml](../../.gitbook/assets/api.yaml)
 {% endswagger %}
 
-{% swagger src="../../.gitbook/assets/api.yaml" path="/mrc402/unauction" method="post" %}
+{% swagger src="../../.gitbook/assets/api.yaml" path="/mrc402/unauction/{mrc402_dex_id}" method="post" %}
 [api.yaml](../../.gitbook/assets/api.yaml)
 {% endswagger %}
 
@@ -137,3 +137,4 @@ It helps you to be more creative.
 {% swagger src="../../.gitbook/assets/api.yaml" path="/mrc402/auctionfinish/{mrc402id}" method="get" %}
 [api.yaml](../../.gitbook/assets/api.yaml)
 {% endswagger %}
+

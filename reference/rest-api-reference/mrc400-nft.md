@@ -95,7 +95,7 @@ It helps you to be more creative.\
 [api.yaml](../../.gitbook/assets/api.yaml)
 {% endswagger %}
 
-{% swagger src="../../.gitbook/assets/api.yaml" path="/mrc400" method="put" %}
+{% swagger src="../../.gitbook/assets/api.yaml" path="/mrc400/{mrc400id}" method="put" %}
 [api.yaml](../../.gitbook/assets/api.yaml)
 {% endswagger %}
 
@@ -146,3 +146,4 @@ It helps you to be more creative.\
 {% swagger src="../../.gitbook/assets/api.yaml" path="/mrc401/auctionfinish/{mrc401id}" method="get" %}
 [api.yaml](../../.gitbook/assets/api.yaml)
 {% endswagger %}
+

@@ -274,7 +274,7 @@ paths:
           in: query
           description: |
             - Only designated tokens and Metacoin (Token ID: 0) can be used for MRC401 token auctions and sales under this MRC400 token
-            - If not specified, set to "0"
+            - If this value is "0" or empty, all tokens can be used in all sales/auctions.
           example: "0"
           schema:
             type: string
@@ -352,6 +352,37 @@ paths:
             minLength: 1
             maxLength: 4096
           required: true
+
+        - name: socialmedia
+          in: query
+          schema:
+            type: string
+            format: json_encode
+            minLength: 1
+            maxLength: 40960
+          required: false
+          example: {"facebook" : "https://facebook.com/demo", "homepage":"https://homepage.com"}
+          description: |
+            - Specifies the SNS URL for this project.
+            - Should be json string
+            - **This value is does not have any effect on Metacoin or Metacoin-based blockchain**
+
+        - name: partner
+          in: query
+          schema:
+            type: string
+            format: json_encode
+            minLength: 1
+            maxLength: 40960
+          required: false
+          example: {"MTrqP2QkpBgBfNwgXsyGk3aWKtt3lQp369797277" : "partner", "MTL97iMddTPADBUethWmlIzx3e6mawn724e865aa":"creator","MT7LMaOd9bREtTUP23m0Ge83yA7VNzhUf0399772":"saller"}
+          description: |
+            - Specifies the address to manage the MRC401 included in this project.
+            - The permissions that can be specified are as follows:
+            - partner: MRC401 creation, update the MRC401 you created, selling while creating MRC401, sale/sale cancellation of MRC401 items that have never been traded/transferred after creation, auction/auction cancellation
+            - seller: Sell while creating MRC401, sell/cancel sale of MRC401 items that have never been traded/transferred after creation, cancel auction/auction
+            - creator: MRC401 creation, update the MRC401 you created
+
         - name: tkey
           in: query
           description: Temporary key for Sign(return value of GET /getkey/transfer)
@@ -365,8 +396,8 @@ paths:
             type: string
             format: base64
           description: |
-            - ECDSA sign for concat owner, name, url, imageurl, category, itemurl, itemimageurl, data, tkey
-            - ex) ecdsa_sign(privatekey of owner address, owner +'|'+ name +'|'+ url +'|'+ imageurl+'|'+category+'|'+itemurl+'|'+itemimageurl+'|'+data+'|'+tkey)
+            - ECDSA sign for concat owner, name, url, imageurl, category, itemurl, itemimageurl, partner, data, tkey
+            - ex) ecdsa_sign(privatekey of owner address, owner +'|'+ name +'|'+ url +'|'+ imageurl+'|'+category+'|'+itemurl+'|'+itemimageurl+'|'+partner+'|'+data+'|'+tkey)
 
       responses:
         "200":
@@ -378,6 +409,28 @@ paths:
                 description: new MRC400 Token ID
         "405":
           description: Missing or invalid RSA key
+
+  /mrc400/{mrc400id}:
+    get:
+      tags:
+        - MRC400
+      summary: Get information of MRC400
+      parameters:
+        - name: mrc400id
+          in: path
+          description: MRC400 Token ID
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: successful operation
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/MRC400"
+        "404":
+          description: MRC400 not found
     put:
       tags:
         - MRC400
@@ -399,37 +452,41 @@ paths:
         - name: name
           in: query
           example: Meta-RPG
-          description: If set to an empty string, the existing value is not changed.
+          description: |
+            - MRC400 Name
+            - **This value is does not have any effect on Metacoin or Metacoin-based blockchain**
           schema:
             type: string
-            format: Metacoin Address
-            minLength: 0
+            minLength: 1
             maxLength: 128
           required: true
         - name: url
           in: query
-          description: If set to an empty string, the existing value is not changed.
+          description: |
+            - MRC400 Project URL
+            - **This value is does not have any effect on Metacoin or Metacoin-based blockchain**
           example: https://mrc400-project.com/
           schema:
             type: string
-            minLength: 0
+            minLength: 1
             maxLength: 255
           required: true
         - name: imageurl
           in: query
-          description: If set to an empty string, the existing value is not changed.
+          description: |
+            - MRC400 Project Image URL
+            - **This value is does not have any effect on Metacoin or Metacoin-based blockchain**
           example: https://mrc400-project.com/images/project.png
           schema:
             type: string
-            minLength: 0
+            minLength: 1
             maxLength: 255
           required: true
         - name: allowtoken
           in: query
           description: |
-            - Only designated tokens and Metacoin (Token ID: 0) can be used for MRC401 auctions and sales under this MRC400
-            - If not specified, set to "0"
-            - If you do not want to change this value, you must send the same value as the old one.
+            - Only designated tokens and Metacoin (Token ID: 0) can be used for MRC401 token auctions and sales under this MRC400 token
+            - If this value is "0" or empty, all tokens can be used in all sales/auctions.
           example: "0"
           schema:
             type: string
@@ -439,56 +496,105 @@ paths:
           required: true
         - name: category
           in: query
-          description: If set to an empty string, the existing value is not changed.
+          description: |
+            - This value refers to the classification in which the MRC400 token is used.  It does not affect Metacoin or Metacoin-based blockchains.
+            - **This value is does not have any effect on Metacoin or Metacoin-based blockchain**
           example: "Baseball Card"
           schema:
             type: string
             format: int
-            minLength: 0
+            minLength: 1
             maxLength: 64
           required: true
         - name: description
           in: query
-          description: If set to an empty string, the existing value is not changed.
+          description: |
+            - Set the field where MRC401 Token is used
+            - This value is a description of the MRC400 Token and does not have any effect on Metacoin or Metacoin-based blockchain.
+            - **This value is does not have any effect on Metacoin or Metacoin-based blockchain**
           example: "Metacoin NFT base RPG Game"
           schema:
             type: string
             format: int
-            minLength: 0
+            minLength: 1
             maxLength: 4096
           required: true
 
         - name: itemurl
           in: query
-          description: If set to an empty string, the existing value is not changed.
+          description: |
+            - Specify the URL of JSON Data that stores detailed data of MRC401 token.
+            - If the `url` value of MRC401 Token is an empty string, this value is used.
+            - The URI value allows for ID substitution by clients. If the string {id} exists in any URI, clients MUST replace this with the actual token ID in hexadecimal form. This allows for a large number of tokens to use the same on-chain string by defining a URI once, for that large number of tokens.
+            - This value is the URL of a JSON file that stores data that can be referenced by an application using MRC401 Token
+            - **This value is does not have any effect on Metacoin or Metacoin-based blockchain**
           example: "https://mrc400-project.com/info/{id}"
           schema:
             type: string
             format: int
-            minLength: 0
+            minLength: 1
             maxLength: 255
           required: true
 
         - name: itemimageurl
           in: query
-          description: If set to an empty string, the existing value is not changed.
+          description: |
+            - Specify the image URL of the MRC401 token.
+            - If the `imageurl` value of MRC401 Token is an empty string, this value is used.
+            - The URI value allows for ID substitution by clients. If the string {id} exists in any URI, clients MUST replace this with the actual token ID in hexadecimal form. This allows for a large number of tokens to use the same on-chain string by defining a URI once, for that large number of tokens.
+            - This value is the URL of the image to be used when displaying MRC401 Token in an application that uses MRC401 Token
+            - **This value is does not have any effect on Metacoin or Metacoin-based blockchain**
           example: "https://mrc400-project.com/info/{id}"
           schema:
             type: string
             format: int
-            minLength: 0
+            minLength: 1
             maxLength: 255
           required: true
 
         - name: data
           in: query
-          description: If set to an empty string, the existing value is not changed.
+          description: |
+            - MRC400 detail info
+            - Should be json string
+            - **This value is does not have any effect on Metacoin or Metacoin-based blockchain**
           schema:
             type: string
             format: int
-            minLength: 0
+            minLength: 1
             maxLength: 4096
           required: true
+
+        - name: socialmedia
+          in: query
+          schema:
+            type: string
+            format: json_encode
+            minLength: 1
+            maxLength: 40960
+          required: false
+          example: {"facebook" : "https://facebook.com/demo", "homepage":"https://homepage.com"}
+          description: |
+            - Specifies the SNS URL for this project.
+            - Should be json string
+            - **This value is does not have any effect on Metacoin or Metacoin-based blockchain**
+
+        - name: partner
+          in: query
+          schema:
+            type: string
+            format: json_encode
+            minLength: 1
+            maxLength: 40960
+          required: false
+          example: {"MTrqP2QkpBgBfNwgXsyGk3aWKtt3lQp369797277" : "partner", "MTL97iMddTPADBUethWmlIzx3e6mawn724e865aa":"creator","MT7LMaOd9bREtTUP23m0Ge83yA7VNzhUf0399772":"saller"}
+          description: |
+            - Specifies the address to manage the MRC401 included in this project.
+            - The permissions that can be specified are as follows:
+            - partner: MRC401 creation, update the MRC401 you created, selling while creating MRC401, sale/sale cancellation of MRC401 items that have never been traded/transferred after creation, auction/auction cancellation
+            - seller: Sell while creating MRC401, sell/cancel sale of MRC401 items that have never been traded/transferred after creation, cancel auction/auction
+            - creator: MRC401 creation, update the MRC401 you created
+
         - name: tkey
           in: query
           description: Temporary key for Sign(return value of GET /getkey/transfer)
@@ -516,28 +622,7 @@ paths:
                     type: string
                     description: Transaction ID
         "405":
-          description: Missing or invalid RSA key
-  /mrc400/{mrc400id}:
-    get:
-      tags:
-        - MRC400
-      summary: Get information of MRC400
-      parameters:
-        - name: mrc400id
-          in: path
-          description: MRC400 Token ID
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: successful operation
-          content:
-            "*/*":
-              schema:
-                $ref: "#/components/schemas/MRC400"
-        "404":
-          description: MRC400 not found
+          description: Missing or invalid RSA key          
   /mrc401/{mrc400id}:
     post:
       tags:
@@ -552,15 +637,12 @@ paths:
             type: string
             minLength: 40
             maxLength: 40
-        - name: itemdata
+        - name: itemdata[]
           in: query
-          description: MRC401 token data
+          description: |
+            - MRC401 token data
+            - This parameter must be sent as a json encoded string.
           schema:
-            type: array
-            format: json
-            minItems: 1
-            maxItems: 100
-            items:
               type: object
               properties:
                 item_id:
@@ -653,6 +735,7 @@ paths:
             "*/*":
               schema:
                 type: object
+                format: json_encode
                 properties:
                   transaction_id:
                     type: string
@@ -665,7 +748,7 @@ paths:
         - MRC401
       summary: GET MRC401 Token
       parameters:
-        - name: mrc400id
+        - name: mrc401id
           in: path
           example: "MRC400_db7da6bc848ba62e621aede40f75dc760_0000000000000000000000000000000000000001"
           description: MRC401 Token ID
@@ -758,27 +841,16 @@ paths:
           schema:
             type: string
             format: Metacoin Adderess
-        - name: mrc400id
-          in: path
-          description: |
-            - MRC400 Token ID
-            - The mrc400 token ID of the mrc401 item specified in itemdata.
-          required: true
-          schema:
-            type: string
-            minLength: 40
-            maxLength: 40
-        - name: itemdata
+        - name: itemdata[]
           in: query
-          description: MRC401 Token information to be sold
+          description: |
+            - MRC401 Token information to be sold
+            - This parameter must be sent as a json encoded string.
+            - The quantity that can be sold at one time is 1~1024.
+          example: '[{"MRC400_db7da6bc848ba62e621aede40f75dc760_0000000000000000000000000000000000000001","MRC400_db7da6bc848ba62e621aede40f75dc760_0000000000000000000000000000000000000002"}]'
           schema:
-            type: array
-            format: json
-            minItems: 1
-            maxItems: 100
-            items:
-              type: object
-              properties:
+            type: object
+            properties:
                 id:
                   example: "MRC400_db7da6bc848ba62e621aede40f75dc760_0000000000000000000000000000000000000001"
                   type: string
@@ -786,7 +858,6 @@ paths:
                   maxLength: 81
                   description: |
                     - MRC401 Item ID
-                    - It is the MRC401 Token belonging to the token specified in mrc400id
                 price:
                   example: "10000000000"
                   type: string
@@ -802,10 +873,10 @@ paths:
                   maximum: 9999999999999999999999999999999999999999
                   description: |
                     - This is the token that the owner will receive when melting this token.
-                    - Only allowtoken and "0" specified in MRC400 are possible.
+                    - If the value of allowtoken in MRC400 is specified, only Metacoin and the specified token are allowed.
         - name: tkey
           in: query
-          description: Temporary key for Sign(return value of GET /getkey/transfer)
+          description: Temporary key for Sign(return value of GET /nonce)
           required: true
           schema:
             type: string
@@ -843,16 +914,6 @@ paths:
           schema:
             type: string
             format: Metacoin Adderess
-        - name: mrc400id
-          in: path
-          description: |
-            - MRC400 Token ID
-            - The mrc400 token ID of the mrc401 item specified in itemdata.
-          required: true
-          schema:
-            type: string
-            minLength: 40
-            maxLength: 40
         - name: itemdata
           in: query
           description: |
@@ -1011,16 +1072,6 @@ paths:
           schema:
             type: string
             format: Metacoin Adderess
-        - name: mrc400id
-          in: path
-          description: |
-            - MRC400 Token ID
-            - The mrc400 token ID of the mrc401 item specified in itemdata.
-          required: true
-          schema:
-            type: string
-            minLength: 40
-            maxLength: 40
         - name: itemdata
           in: query
           description: MRC401 Token information to be auction
@@ -1129,16 +1180,6 @@ paths:
           schema:
             type: string
             format: Metacoin Adderess
-        - name: mrc400id
-          in: path
-          description: |
-            - MRC400 Token ID
-            - The mrc400 token ID of the mrc401 item specified in itemdata.
-          required: true
-          schema:
-            type: string
-            minLength: 40
-            maxLength: 40
         - name: itemdata
           in: query
           description: |
@@ -1292,8 +1333,7 @@ paths:
                     type: string
                     description: Transaction ID
         "404":
-          description: MRC400 not found
-
+          description: MRC401 not found
 
   /mrc402:
       post:
@@ -1301,63 +1341,147 @@ paths:
           - MRC402
         summary: Create MRC402 Token
         parameters:
-          - name: mrc400id
-            in: path
-            description: MRC400 Token ID
-            required: true
-            schema:
-              type: string
-              minLength: 40
-              maxLength: 40
-          - name: itemdata
-            in: query
-            description: MRC402 token data
-            schema:
-              type: array
-              format: json
-              minItems: 1
-              maxItems: 100
-              items:
-                type: object
-                properties:
-                  initial_reserve:
-                    example: "10000000000"
-                    type: string
-                    format: integer
-                    minimum: 1
-                    maximum: 9999999999999999999999999999999999999999
-                    description: |
-                      - This is the amount the owner will receive when melting this token.
-                      - When creating a token, the amount specified is deducted from the creator's wallet.
-                      - Currency is the token specified in `initial_token`.
-                  sell_fee:
-                    example: "0"
-                    type: string
-                    format: float
-                    minimum: 0
-                    maximum: 99.9999
-                    description: |
-                      - This is the fee that MRC400 Token holders will receive when trading. If this value is 10, when traded for 300 MTC, the MRC400 token holder will receive 30 MTC, 10% of 300 MTC.
-                  melt_fee:
-                    example: "0"
-                    type: string
-                    format: float
-                    minimum: 0
-                    maximum: 99.9999
-                    description: |
-                      - This is the fee that MRC400 token holders receive when they melt MRC402 items. If this value is 10 and the value of initial_reserve is 300 MTC, then when this token holder melts this token, he will receive 30 MTC, 10% of 300 MTC.
-                  transferable:
-                    type: string
-                    example: "Permanent"
-                    enum:
-                      - Permanent
-                      - Bound
-                      - Temporary
-                    description: |
-                      - It means the availability of transactions and transfers.
-                      - Permanent: Transaction, Transfer available
-                      - Bound: Transaction, transfer impossible
-                      - Temprary: Transaction, transfer, but MRC400 creator can change to Permanent, Bound
+        - name: name
+          in: query
+          example: Meta-NFT
+          description: |
+            - MRC402 Name
+            - **This value is does not have any effect on Metacoin or Metacoin-based blockchain**
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 128
+          required: true
+        - name: creator
+          in: query
+          example: MTATLnT6SGKE8RU0CBPoDRfUXL5lr4SLece1a6ee
+          schema:
+            type: string
+            format: Metacoin Address
+            minLength: 40
+            maxLength: 40
+          description: MRC402 Owner
+          required: true
+        - name: url
+          in: query
+          description: |
+            - MRC400 Project URL
+            - **This value is does not have any effect on Metacoin or Metacoin-based blockchain**
+          example: https://mrc402-project.com/
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 255
+          required: true
+        - name: imageurl
+          in: query
+          description: |
+            - MRC400 Project Image URL
+            - **This value is does not have any effect on Metacoin or Metacoin-based blockchain**
+          example: https://mrc400-project.com/images/project.png
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 255
+          required: true
+        - name: allowtoken
+          in: query
+          description: |
+            - Only designated tokens and Metacoin (Token ID: 0) can be used for MRC401 token auctions and sales under this MRC400 token
+            - If not specified, set to "0"
+          example: "0"
+          schema:
+            type: string
+            format: int
+            minLength: 1
+            maxLength: 16
+          required: true
+        - name: category
+          in: query
+          description: |
+            - This value refers to the classification in which the MRC400 token is used.  It does not affect Metacoin or Metacoin-based blockchains.
+            - **This value is does not have any effect on Metacoin or Metacoin-based blockchain**
+          example: "Baseball Card"
+          schema:
+            type: string
+            format: int
+            minLength: 1
+            maxLength: 64
+          required: true
+        - name: description
+          in: query
+          description: |
+            - Set the field where MRC401 Token is used
+            - This value is a description of the MRC400 Token and does not have any effect on Metacoin or Metacoin-based blockchain.
+            - **This value is does not have any effect on Metacoin or Metacoin-based blockchain**
+          example: "Metacoin NFT base RPG Game"
+          schema:
+            type: string
+            format: int
+            minLength: 1
+            maxLength: 4096
+          required: true
+
+        - name: itemurl
+          in: query
+          description: |
+            - Specify the URL of JSON Data that stores detailed data of MRC401 token.
+            - If the `url` value of MRC401 Token is an empty string, this value is used.
+            - The URI value allows for ID substitution by clients. If the string {id} exists in any URI, clients MUST replace this with the actual token ID in hexadecimal form. This allows for a large number of tokens to use the same on-chain string by defining a URI once, for that large number of tokens.
+            - This value is the URL of a JSON file that stores data that can be referenced by an application using MRC401 Token
+            - **This value is does not have any effect on Metacoin or Metacoin-based blockchain**
+          example: "https://mrc400-project.com/info/{id}"
+          schema:
+            type: string
+            format: int
+            minLength: 1
+            maxLength: 255
+          required: true
+
+        - name: itemimageurl
+          in: query
+          description: |
+            - Specify the image URL of the MRC401 token.
+            - If the `imageurl` value of MRC401 Token is an empty string, this value is used.
+            - The URI value allows for ID substitution by clients. If the string {id} exists in any URI, clients MUST replace this with the actual token ID in hexadecimal form. This allows for a large number of tokens to use the same on-chain string by defining a URI once, for that large number of tokens.
+            - This value is the URL of the image to be used when displaying MRC401 Token in an application that uses MRC401 Token
+            - **This value is does not have any effect on Metacoin or Metacoin-based blockchain**
+          example: "https://mrc400-project.com/info/{id}"
+          schema:
+            type: string
+            format: int
+            minLength: 1
+            maxLength: 255
+          required: true
+
+        - name: data
+          in: query
+          description: |
+            - MRC400 detail info
+            - Should be json string
+            - **This value is does not have any effect on Metacoin or Metacoin-based blockchain**
+          schema:
+            type: string
+            format: int
+            minLength: 1
+            maxLength: 4096
+          required: true
+        - name: tkey
+          in: query
+          description: Temporary key for Sign(return value of GET /getkey/transfer)
+          required: true
+          schema:
+            type: string
+        - name: signature
+          in: query
+          required: true
+          schema:
+            type: string
+            format: base64
+          description: |
+            - ECDSA sign for concat owner, name, url, imageurl, category, itemurl, itemimageurl, data, tkey
+            - ex) ecdsa_sign(privatekey of owner address, owner +'|'+ name +'|'+ url +'|'+ imageurl+'|'+category+'|'+itemurl+'|'+itemimageurl+'|'+data+'|'+tkey)
+
         responses:
           "200":
             description: successful operation
@@ -1377,7 +1501,7 @@ paths:
         - MRC402
       summary: GET MRC402 Token
       parameters:
-        - name: mrc400id
+        - name: mrc402id
           in: path
           example: "MRC400_db7da6bc848ba62e621aede40f75dc760_0000000000000000000000000000000000000001"
           description: MRC402 Token ID
@@ -1454,7 +1578,7 @@ paths:
         "404":
           description: MRC400 not found
 
-  /mrc402/sell:
+  /mrc402/sell/{mrc402id}:
     post:
       tags:
         - MRC402
@@ -1470,7 +1594,7 @@ paths:
           schema:
             type: string
             format: Metacoin Adderess
-        - name: mrc400id
+        - name: mrc402id
           in: path
           description: |
             - MRC400 Token ID
@@ -1543,7 +1667,7 @@ paths:
                     description: Transaction ID
         "404":
           description: MRC400 not found
-  /mrc402/unsell:
+  /mrc402/unsell/{mrc402_dex_id}:
     post:
       tags:
         - MRC402
@@ -1555,11 +1679,10 @@ paths:
           schema:
             type: string
             format: Metacoin Adderess
-        - name: mrc400id
+        - name: mrc402_dex_id
           in: path
           description: |
-            - MRC400 Token ID
-            - The mrc400 token ID of the mrc402 item specified in itemdata.
+            - MRC402 DEX ID
           required: true
           schema:
             type: string
@@ -1706,7 +1829,7 @@ paths:
         "404":
           description: MRC400 not found
 
-  /mrc402/auction:
+  /mrc402/auction/{mrc402id}:
     post:
       tags:
         - MRC402
@@ -1723,11 +1846,10 @@ paths:
           schema:
             type: string
             format: Metacoin Adderess
-        - name: mrc400id
+        - name: mrc402id
           in: path
           description: |
-            - MRC400 Token ID
-            - The mrc400 token ID of the mrc402 item specified in itemdata.
+            - MRC402 Token ID
           required: true
           schema:
             type: string
@@ -1827,7 +1949,7 @@ paths:
         "404":
           description: MRC400 not found
 
-  /mrc402/unauction:
+  /mrc402/unauction/{mrc402_dex_id}:
     post:
       tags:
         - MRC402
@@ -1841,11 +1963,10 @@ paths:
           schema:
             type: string
             format: Metacoin Adderess
-        - name: mrc400id
+        - name: mrc402_dex_id
           in: path
           description: |
-            - MRC400 Token ID
-            - The mrc400 token ID of the mrc402 item specified in itemdata.
+            - MRC402 DEX ID
           required: true
           schema:
             type: string
@@ -4059,12 +4180,15 @@ components:
           description: |
             - Metacoin address to receive commission if the value of platform_commission is greater than 0
         regdate:
-          type: int64
+          type: integer
+          format: int64
         sell_date:
-          type: int64
+          type: integer
+          format: int64
           description: Time the transaction was completed
         cancel_date:
-          type: int64
+          type: integer
+          format: int64
           description: DEX registration cancellation time
         sell_price:
           type: string
@@ -4099,34 +4223,47 @@ components:
     MRC400:
       type: object
       properties:
+        owner:
+          type: string
+          example: MTPBF7OHamYp0luagfi2RcleKFyQf2qU9d530ee2
+        name:
+          type: string
+          example: MRC400 Project
+        url:
+          type: string
+          example: https://metacoin.mrc400project.com/
+        image_url:
+          type: string
+          example: https://metacoin.mrc400project.com/image/logo.png
         allow_token:
           type: string
           format: int32
-          description: |
-            Only designated tokens and Metacoin (Token ID: 0) can be used for MRC401 token auctions and sales under this MRC400 token
+          example: 0
         category:
           type: string
-          description: This value refers to the classification in which the MRC400 token is used.  It does not affect Metacoin or Metacoin-based blockchains.
-        createdate:
-          type: integer
-          format: UnixTimestamp (UTC)
-          description: MRC400 Token generation time.
+          example: PFP type NFT
         data:
           type: string
         description:
           type: string
-        image_url:
-          type: string
-        name:
-          type: string
-        owner:
-          type: string
-        url:
-          type: string
+          example: This project is MRC400 base PFP
         item_image_url:
           type: string
+          example: https://metacoin.mrc400project.com/image/mrc401/{id}
         item_url:
           type: string
+          example: https://metacoin.mrc400project.com/mrc401/{id}
+        socialmedia:
+          type: string
+          example: {"facebook" : "https://facebook.com/demo", "homepage":"https://homepage.com"}
+        partner:
+          type: string
+          format: json_encode
+          example: {"MTrqP2QkpBgBfNwgXsyGk3aWKtt3lQp369797277" : "partner", "MTL97iMddTPADBUethWmlIzx3e6mawn724e865aa":"creator","MT7LMaOd9bREtTUP23m0Ge83yA7VNzhUf0399772":"saller"}
+        createdate:
+          type: integer
+          format: UnixTimestamp (UTC)
+          description: MRC400 Token generation time.
     MRC401:
       type: object
       properties:
