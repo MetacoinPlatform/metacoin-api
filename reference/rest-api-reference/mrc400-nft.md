@@ -95,6 +95,98 @@ It helps you to be more creative.\
 [api.yaml](../../.gitbook/assets/api.yaml)
 {% endswagger %}
 
+```php
+<?php
+define('MTC_HOST', 'https://testnetrest.metacoin.network:20923');
+
+// change it !!!
+$from_addr = "MTPBF7OHamYp0luagfi2RcleKFyQf2qU9d530ee2";
+$from_key = "-----BEGIN EC PRIVATE KEY-----\r\nMIGkAgEBBDAbXEsjPkxq54dEOS+KXquoNrJ+VK9+ukXqNLlCUCyZqcVWGxUmF9r1\r\nEURYodDy/f6gBwYFK4EEACKhZANiAARLba/Xyzdbsyq5XigDD8HhhhN0OGk87OSQ\r\n401nZISt5y8wX625P/0N+51jX8ohHks2A9di7GrMBREZKizVuM50pVUmlULRgeKU\r\nLYuguhRSvtxBIoGx5JX++Sk8SdZoRcI=\r\n-----END EC PRIVATE KEY-----\r\n";
+
+$curl = curl_init();
+curl_setopt_array($curl, array(
+	CURLOPT_URL => MTC_HOST . '/nonce/' . $from_addr,
+	CURLOPT_RETURNTRANSFER => true,
+	CURLOPT_CONNECTTIMEOUT => 5,
+	CURLOPT_TIMEOUT => 20,
+	CURLOPT_SSL_VERIFYPEER => false,
+	CURLOPT_SSL_VERIFYHOST => false,
+	CURLOPT_POST => false,
+	CURLOPT_CUSTOMREQUEST => 'GET',
+));
+
+$body = curl_exec($curl);
+$err_code = curl_errno($curl);
+if ($err_code) {
+	$err_msg = curl_error($curl);
+	throw new Exception($err_msg, $http_code);
+}
+
+$http_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+if ($http_code != '200') {
+	throw new Exception($body, $http_code);
+}
+curl_close($curl);
+$curl = null;
+$tkey = $body;
+
+$data = array(
+	'owner' => $from_addr,
+	'name' => 'MRC400 Project',
+	'url' => 'http://mrc400-project.domain.com',
+	'imageurl' => 'http://mrc400-project.domain.com/image/project.png',
+	'allowtoken' => "0",                // or token id
+	'category' => 'game',
+	'description' => 'Metacoin MRC110 Project',
+	'itemurl' => 'https://mrc400-project.domain.com/item/{id}',
+	'itemimageurl' => 'https://mrc400-project.domain.com/image/item/{id}',
+	'data' => 'project data',
+	'socialmedia' => "",    // json_encode(array('twitter' => 'http://twitter.com/'))
+	'partner' => "",        // json_encode(array($addr[1][0] => 'partner')),
+	'tkey' => $tkey,
+);
+
+$sign_data = implode('|', array(
+	$data['owner'], $data['name'], $data['url'], $data['imageurl'], $data['category'],
+	$data['itemurl'], $data['itemimageurl'], $data['partner'], $data['data'], $tkey
+));
+openssl_sign($sign_data, $signature, $from_key, OPENSSL_ALGO_SHA384);
+printf("Sign : [%s]\n", base64_encode($signature));
+
+$data['signature'] = base64_encode($signature);
+
+$curl = curl_init();
+curl_setopt_array($curl, array(
+	CURLOPT_URL => MTC_HOST . '/mrc400',
+	CURLOPT_RETURNTRANSFER => true,
+	CURLOPT_CONNECTTIMEOUT => 5,
+	CURLOPT_TIMEOUT => 20,
+	CURLOPT_SSL_VERIFYPEER => false,
+	CURLOPT_SSL_VERIFYHOST => false,
+	CURLOPT_POSTFIELDS => http_build_query($data),
+	CURLOPT_POST => true,
+	CURLOPT_HTTPHEADER => array('Content-Type: application/x-www-form-urlencoded')
+));
+
+$body = curl_exec($curl);
+$err_code = curl_errno($curl);
+if ($err_code) {
+	$err_msg = curl_error($curl);
+	throw new Exception($err_msg, $http_code);
+}
+
+$http_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+if ($http_code != '200') {
+	throw new Exception($body, $http_code);
+}
+curl_close($curl);
+$curl = null;
+
+
+$r = json_decode($body, true);
+printf("TXID : %s, MRC400 ID : %s\r\n", $r['txid'], $r['mrc400id']);
+```
+
 {% swagger src="../../.gitbook/assets/api.yaml" path="/mrc400/{mrc400id}" method="put" %}
 [api.yaml](../../.gitbook/assets/api.yaml)
 {% endswagger %}
