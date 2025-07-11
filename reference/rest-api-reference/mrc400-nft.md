@@ -1,6 +1,6 @@
 # MRC400(NFT)
 
-## NFT(Non-fungible token) is a digital asset that has its own identifiers and unique such as game items or masterpiece and cannot be replaced by another. <a href="#id-6439" id="id-6439"></a>
+## NFT(Non-fungible token) is a digital asset that has its own identifiers and unique such as game items or masterpiece and cannot be replaced by another. <a href="#6439" id="6439"></a>
 
 * Each has a unique ID.
 * This is like a ticket. Tickets to enter the show look the same, but have different seat numbers.
@@ -13,7 +13,7 @@ MRC400 supports the single assets and shares some portion of commission to a cop
 
 It supports to create Token/MRC401 and Mint and Burn by QR Code or Deeplink on MetaWallet webpage.
 
-### Copyright Information <a href="#id-63b5" id="id-63b5"></a>
+### Copyright Information <a href="#63b5" id="63b5"></a>
 
 NFT is usually used in work of art.
 
@@ -35,7 +35,7 @@ Mint will increase the total issuance and can only be issued by issuer.
 
 If there is an initial asset, it will be reduced from the creator’s wallet by the amount of mint \* initial asset.
 
-### Transfer <a href="#id-1ac9" id="id-1ac9"></a>
+### Transfer <a href="#1ac9" id="1ac9"></a>
 
 If you want to send multiple MRC401s, you need to send them one by one.
 
@@ -91,58 +91,151 @@ It supports multiple copyright holders and give stable profits on the Metacoin N
 It helps you to be more creative.\
 
 
-{% openapi src="../../.gitbook/assets/api.yaml" path="/mrc400" method="post" %}
+{% swagger src="../../.gitbook/assets/api.yaml" path="/mrc400" method="post" %}
 [api.yaml](../../.gitbook/assets/api.yaml)
-{% endopenapi %}
+{% endswagger %}
 
-{% openapi src="../../.gitbook/assets/api.yaml" path="/mrc400" method="put" %}
-[api.yaml](../../.gitbook/assets/api.yaml)
-{% endopenapi %}
+```php
+<?php
+define('MTC_HOST', 'https://testnetrest.metacoin.network:20923');
 
-{% openapi src="../../.gitbook/assets/api.yaml" path="/mrc400/{mrc400id}" method="get" %}
-[api.yaml](../../.gitbook/assets/api.yaml)
-{% endopenapi %}
+// change it !!!
+$from_addr = "MTPBF7OHamYp0luagfi2RcleKFyQf2qU9d530ee2";
+$from_key = "-----BEGIN EC PRIVATE KEY-----\r\nMIGkAgEBBDAbXEsjPkxq54dEOS+KXquoNrJ+VK9+ukXqNLlCUCyZqcVWGxUmF9r1\r\nEURYodDy/f6gBwYFK4EEACKhZANiAARLba/Xyzdbsyq5XigDD8HhhhN0OGk87OSQ\r\n401nZISt5y8wX625P/0N+51jX8ohHks2A9di7GrMBREZKizVuM50pVUmlULRgeKU\r\nLYuguhRSvtxBIoGx5JX++Sk8SdZoRcI=\r\n-----END EC PRIVATE KEY-----\r\n";
 
-{% openapi src="../../.gitbook/assets/api.yaml" path="/mrc401/{mrc400id}" method="post" %}
-[api.yaml](../../.gitbook/assets/api.yaml)
-{% endopenapi %}
+$curl = curl_init();
+curl_setopt_array($curl, array(
+	CURLOPT_URL => MTC_HOST . '/nonce/' . $from_addr,
+	CURLOPT_RETURNTRANSFER => true,
+	CURLOPT_CONNECTTIMEOUT => 5,
+	CURLOPT_TIMEOUT => 20,
+	CURLOPT_SSL_VERIFYPEER => false,
+	CURLOPT_SSL_VERIFYHOST => false,
+	CURLOPT_POST => false,
+	CURLOPT_CUSTOMREQUEST => 'GET',
+));
 
-{% openapi src="../../.gitbook/assets/api.yaml" path="/mrc401/{mrc401id}" method="get" %}
-[api.yaml](../../.gitbook/assets/api.yaml)
-{% endopenapi %}
+$body = curl_exec($curl);
+$err_code = curl_errno($curl);
+if ($err_code) {
+	$err_msg = curl_error($curl);
+	throw new Exception($err_msg, $http_code);
+}
 
-{% openapi src="../../.gitbook/assets/api.yaml" path="/mrc401/transfer/{mrc401id}" method="post" %}
-[api.yaml](../../.gitbook/assets/api.yaml)
-{% endopenapi %}
+$http_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+if ($http_code != '200') {
+	throw new Exception($body, $http_code);
+}
+curl_close($curl);
+$curl = null;
+$tkey = $body;
 
-{% openapi src="../../.gitbook/assets/api.yaml" path="/mrc401/sell" method="post" %}
-[api.yaml](../../.gitbook/assets/api.yaml)
-{% endopenapi %}
+$data = array(
+	'owner' => $from_addr,
+	'name' => 'MRC400 Project',
+	'url' => 'http://mrc400-project.domain.com',
+	'imageurl' => 'http://mrc400-project.domain.com/image/project.png',
+	'allowtoken' => "0",                // or token id
+	'category' => 'game',
+	'description' => 'Metacoin MRC110 Project',
+	'itemurl' => 'https://mrc400-project.domain.com/item/{id}',
+	'itemimageurl' => 'https://mrc400-project.domain.com/image/item/{id}',
+	'data' => 'project data',
+	'socialmedia' => "",    // json_encode(array('twitter' => 'http://twitter.com/'))
+	'partner' => "",        // json_encode(array($addr[1][0] => 'partner')),
+	'tkey' => $tkey,
+);
 
-{% openapi src="../../.gitbook/assets/api.yaml" path="/mrc401/unsell" method="post" %}
-[api.yaml](../../.gitbook/assets/api.yaml)
-{% endopenapi %}
+$sign_data = implode('|', array(
+	$data['owner'], $data['name'], $data['url'], $data['imageurl'], $data['category'],
+	$data['itemurl'], $data['itemimageurl'], $data['partner'], $data['data'], $tkey
+));
+openssl_sign($sign_data, $signature, $from_key, OPENSSL_ALGO_SHA384);
+printf("Sign : [%s]\n", base64_encode($signature));
 
-{% openapi src="../../.gitbook/assets/api.yaml" path="/mrc401/buy/{mrc401id}" method="post" %}
-[api.yaml](../../.gitbook/assets/api.yaml)
-{% endopenapi %}
+$data['signature'] = base64_encode($signature);
 
-{% openapi src="../../.gitbook/assets/api.yaml" path="/mrc401/melt/{mrc401id}" method="post" %}
-[api.yaml](../../.gitbook/assets/api.yaml)
-{% endopenapi %}
+$curl = curl_init();
+curl_setopt_array($curl, array(
+	CURLOPT_URL => MTC_HOST . '/mrc400',
+	CURLOPT_RETURNTRANSFER => true,
+	CURLOPT_CONNECTTIMEOUT => 5,
+	CURLOPT_TIMEOUT => 20,
+	CURLOPT_SSL_VERIFYPEER => false,
+	CURLOPT_SSL_VERIFYHOST => false,
+	CURLOPT_POSTFIELDS => http_build_query($data),
+	CURLOPT_POST => true,
+	CURLOPT_HTTPHEADER => array('Content-Type: application/x-www-form-urlencoded')
+));
 
-{% openapi src="../../.gitbook/assets/api.yaml" path="/mrc401/auction" method="post" %}
-[api.yaml](../../.gitbook/assets/api.yaml)
-{% endopenapi %}
+$body = curl_exec($curl);
+$err_code = curl_errno($curl);
+if ($err_code) {
+	$err_msg = curl_error($curl);
+	throw new Exception($err_msg, $http_code);
+}
 
-{% openapi src="../../.gitbook/assets/api.yaml" path="/mrc401/unauction" method="post" %}
-[api.yaml](../../.gitbook/assets/api.yaml)
-{% endopenapi %}
+$http_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+if ($http_code != '200') {
+	throw new Exception($body, $http_code);
+}
+curl_close($curl);
+$curl = null;
 
-{% openapi src="../../.gitbook/assets/api.yaml" path="/mrc401/bid/{mrc401id}" method="post" %}
-[api.yaml](../../.gitbook/assets/api.yaml)
-{% endopenapi %}
 
-{% openapi src="../../.gitbook/assets/api.yaml" path="/mrc401/auctionfinish/{mrc401id}" method="get" %}
+$r = json_decode($body, true);
+printf("TXID : %s, MRC400 ID : %s\r\n", $r['txid'], $r['mrc400id']);
+```
+
+{% swagger src="../../.gitbook/assets/api.yaml" path="/mrc400/{mrc400id}" method="put" %}
 [api.yaml](../../.gitbook/assets/api.yaml)
-{% endopenapi %}
+{% endswagger %}
+
+{% swagger src="../../.gitbook/assets/api.yaml" path="/mrc400/{mrc400id}" method="get" %}
+[api.yaml](../../.gitbook/assets/api.yaml)
+{% endswagger %}
+
+{% swagger src="../../.gitbook/assets/api.yaml" path="/mrc401/{mrc400id}" method="post" %}
+[api.yaml](../../.gitbook/assets/api.yaml)
+{% endswagger %}
+
+{% swagger src="../../.gitbook/assets/api.yaml" path="/mrc401/{mrc401id}" method="get" %}
+[api.yaml](../../.gitbook/assets/api.yaml)
+{% endswagger %}
+
+{% swagger src="../../.gitbook/assets/api.yaml" path="/mrc401/transfer/{mrc401id}" method="post" %}
+[api.yaml](../../.gitbook/assets/api.yaml)
+{% endswagger %}
+
+{% swagger src="../../.gitbook/assets/api.yaml" path="/mrc401/sell" method="post" %}
+[api.yaml](../../.gitbook/assets/api.yaml)
+{% endswagger %}
+
+{% swagger src="../../.gitbook/assets/api.yaml" path="/mrc401/unsell" method="post" %}
+[api.yaml](../../.gitbook/assets/api.yaml)
+{% endswagger %}
+
+{% swagger src="../../.gitbook/assets/api.yaml" path="/mrc401/buy/{mrc401id}" method="post" %}
+[api.yaml](../../.gitbook/assets/api.yaml)
+{% endswagger %}
+
+{% swagger src="../../.gitbook/assets/api.yaml" path="/mrc401/melt/{mrc401id}" method="post" %}
+[api.yaml](../../.gitbook/assets/api.yaml)
+{% endswagger %}
+
+{% swagger src="../../.gitbook/assets/api.yaml" path="/mrc401/auction" method="post" %}
+[api.yaml](../../.gitbook/assets/api.yaml)
+{% endswagger %}
+
+{% swagger src="../../.gitbook/assets/api.yaml" path="/mrc401/unauction" method="post" %}
+[api.yaml](../../.gitbook/assets/api.yaml)
+{% endswagger %}
+
+{% swagger src="../../.gitbook/assets/api.yaml" path="/mrc401/bid/{mrc401id}" method="post" %}
+[api.yaml](../../.gitbook/assets/api.yaml)
+{% endswagger %}
+
+{% swagger src="../../.gitbook/assets/api.yaml" path="/mrc401/auctionfinish/{mrc401id}" method="get" %}
+[api.yaml](../../.gitbook/assets/api.yaml)
+{% endswagger %}
+
