@@ -110,9 +110,9 @@ printf("Address list : %s\n", $body);
 
 To make your first request, send an token transfer
 
-{% swagger src=".gitbook/assets/api.yaml" path="/transfer" method="post" %}
+{% openapi src=".gitbook/assets/api.yaml" path="/transfer" method="post" %}
 [api.yaml](.gitbook/assets/api.yaml)
-{% endswagger %}
+{% endopenapi %}
 
 {% tabs %}
 {% tab title="PHP" %}
@@ -221,29 +221,85 @@ echo "Transfer $from_addr => $to_addr, Token $token, Amount $amount, TXID $r \r\
 
 {% tab title="Node" %}
 ```javascript
-// require the myapi module and set it up with your API key
-const myapi = require('myapi')(YOUR_API_KEY);
+const https = require('https');
+const axios = require('axios');
+const crypto = require('crypto');
+const qs = require('querystring');
 
-const newPet = away myapi.pet.create({
-    name: 'Wilson',
-    owner_id: 'sha7891bikojbkreuy',
-    species: 'Dog',
-    breed: 'Golden Retriever',
-})
-```
-{% endtab %}
+// 테스트넷 or 메인넷 선택
+const MTC_HOST = 'https://testnetrest.metacoin.network:20923';
+// const MTC_HOST = 'https://rest.metacoin.network:20923';
 
-{% tab title="Python" %}
-```python
-// Set your API key before making the request
-myapi.api_key = YOUR_API_KEY
+const from_addr = "MTALJxh2p4sMLtx5VOsVwYlPR5L3C5jQe95f56ff";
+const from_private_key_pem = `-----BEGIN EC PRIVATE KEY-----
+......
+-----END EC PRIVATE KEY-----`;
 
-myapi.Pet.create(
-    name='Wilson',
-    owner_id='sha7891bikojbkreuy',
-    species='Dog',
-    breed='Golden Retriever',
-)
+const to_addr = "MTChxRen6tcWAPr55aJN52lPoZQyaAjNc112991b"; // 수신 주소
+const amount = "1"; // 1 MTC
+const token = "1269"; // token 0 is MTC
+
+async function mtc_get(uri) {
+    try {
+        const res = await axios.get(`${MTC_HOST}${uri}`, {
+            httpsAgent: new https.Agent({ rejectUnauthorized: false })
+        });
+        console.log(`GET ${uri} =>`, res.data);
+        return res.data;
+    } catch (error) {
+        console.error(`GET ${uri} Error:`, error.message);
+        return null;
+    }
+}
+
+async function mtc_post(uri, params) {
+    try {
+        const res = await axios.post(`${MTC_HOST}${uri}`, qs.stringify(params), {
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            httpsAgent: new https.Agent({ rejectUnauthorized: false })
+        });
+        console.log(`POST ${uri} =>`, res.data);
+        return res.data;
+    } catch (error) {
+        console.error(`POST ${uri} Error:`, error.response?.data || error.message);
+        return null;
+    }
+}
+
+async function sendTransaction() {
+    const tkey = await mtc_get(`/getkey/transfer/${from_addr}`);
+    if (!tkey) {
+        console.error("Failed to get tkey");
+        return;
+    }
+
+    const data = `${from_addr}|${to_addr}|${token}|${amount}|${tkey}`;
+
+    const sign = crypto.createSign('SHA384');
+    sign.update(data);
+    sign.end();
+
+    const signature = sign.sign(from_private_key_pem, 'base64');
+
+    const postData = {
+        from: from_addr,
+        to: to_addr,
+        token,
+        amount,
+        signature,
+        unlockdate: '0',
+        tags: 'it is tag',
+        memo: 'it is memo',
+        checkkey: tkey
+    };
+
+    const result = await mtc_post('/transfer/', postData);
+    if (result) {
+        console.log(`Transfer ${from_addr} => ${to_addr}, Token ${token}, Amount ${amount}, TXID ${result}`);
+    }
+}
+
+sendTransaction();
 ```
 {% endtab %}
 {% endtabs %}
