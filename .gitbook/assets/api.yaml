@@ -191,6 +191,50 @@ tags:
       - The creation of tokens proceeds as follows.
       - Save token information by calling /token
       - Generate tokens by calling /token/{tkey}
+  - name: MRC020
+    description: Can publish saved data after a specific request or after a certain time.
+  - name: MRC030
+    description: |
+      ## Protocol used to request votes
+      - During voting, the results will be disclosed when the voting period expires.
+      - You cannot see the details of each voting participant.
+      - If you participate in voting, you can give rewards.
+  - name: MRC031
+    description: |
+      ## Protocol used to participate in voting(MRC030)
+      - You can add a sign of the MRC030 Protocol constructor so that only certain users can participate.
+  - name: MRC035
+    description: |
+      ## Protocol used to request surveys
+      - The survey details can be encrypted so that they can be disclosed later or not.
+      - You can disclose your survey details without encryption.
+      - Survey details may or may not be disclosed for each address participating in the vote.
+      - If you participate in the survey, you can reward it.
+  - name: MRC036
+    description: |
+      ## Protocol used to participate in surveys(MRC036)
+      - You can add a Sign of the MRC035 Protocol constructor so that only certain users can participate.
+  - name: MRC040
+    description: |
+      ## DEX Token Exchange Protocol
+      - Token sell/buy using metacoin network
+      - Trade some or all of your sales quantities
+      - Cancel not trade quantities
+  - name: MRC100
+    description: |
+      ## Extra function support Token for GAME
+      - Send token to multiple address
+      - Receive token from multiple address
+      - Save, Edit game item on metacoin network
+      - *MRC100 token require approve by Inblock.*
+  - name: MRC200
+    description: |
+      ## Extra function support Token for Entertainment
+      - *This token require approve by Inblock.*
+  - name: MRC300
+    description: |
+      ## Extra function support Token for Vehicle
+      - *This token require approve by Inblock.*
   - name: MRC400
     description: |
       ## NFT(Non-fungible token) common information
@@ -208,6 +252,28 @@ tags:
       - It is a quantity-based NFT.
       - It is suitable for splitting the rights of a single asset.
       - It supports complex assets and is suitable for use in the form of bonds.
+  - name: MRC410
+    description: |
+      ## Coupon or Ticket common information
+      - Contains common information of coupon/ticket(MRC411).
+      - **It is provided only in `Testnet` and can be changed before being applied to `Mainnet`**
+  - name: MRC411
+    description: |
+      ## Coupon or Ticket
+      - For common information, refer to MRC410.
+      - Users can pass on coupons / tickets issued to them to other users.
+      - The coupon / ticket creator can change the issued coupon to used or canceled.
+      - **Similar to MRC401, except that the original creator can change the status of the coupon / ticket passed to the user.**
+      - **It is provided only in `Testnet` and can be changed before being applied to `Mainnet`**
+  - name: MRC800
+    description: |
+      ## Extra function support Point system
+      **TEST ONLY**
+      - MRC800 is the issuer of the point system
+      - MRC801 means an individual entity under MRC800
+      - Similar to tokens but with the following differences
+      - Additional point can be issued without restrictions
+      - The issuer of MRC 800 can bring in another user's MRC 801 points without the owner's consent
 servers:
   - url: "https://rest.metacoin.network:20923"
     description: Mainnet public node
@@ -274,7 +340,7 @@ paths:
           in: query
           description: |
             - Only designated tokens and Metacoin (Token ID: 0) can be used for MRC401 token auctions and sales under this MRC400 token
-            - If this value is "0" or empty, all tokens can be used in all sales/auctions.
+            - If not specified, set to "0"
           example: "0"
           schema:
             type: string
@@ -352,37 +418,6 @@ paths:
             minLength: 1
             maxLength: 4096
           required: true
-
-        - name: socialmedia
-          in: query
-          schema:
-            type: string
-            format: json_encode
-            minLength: 1
-            maxLength: 40960
-          required: false
-          example: {"facebook" : "https://facebook.com/demo", "homepage":"https://homepage.com"}
-          description: |
-            - Specifies the SNS URL for this project.
-            - Should be json string
-            - **This value is does not have any effect on Metacoin or Metacoin-based blockchain**
-
-        - name: partner
-          in: query
-          schema:
-            type: string
-            format: json_encode
-            minLength: 1
-            maxLength: 40960
-          required: false
-          example: {"MTrqP2QkpBgBfNwgXsyGk3aWKtt3lQp369797277" : "partner", "MTL97iMddTPADBUethWmlIzx3e6mawn724e865aa":"creator","MT7LMaOd9bREtTUP23m0Ge83yA7VNzhUf0399772":"saller"}
-          description: |
-            - Specifies the address to manage the MRC401 included in this project.
-            - The permissions that can be specified are as follows:
-            - partner: MRC401 creation, update the MRC401 you created, selling while creating MRC401, sale/sale cancellation of MRC401 items that have never been traded/transferred after creation, auction/auction cancellation
-            - seller: Sell while creating MRC401, sell/cancel sale of MRC401 items that have never been traded/transferred after creation, cancel auction/auction
-            - creator: MRC401 creation, update the MRC401 you created
-
         - name: tkey
           in: query
           description: Temporary key for Sign(return value of GET /getkey/transfer)
@@ -396,8 +431,8 @@ paths:
             type: string
             format: base64
           description: |
-            - ECDSA sign for concat owner, name, url, imageurl, category, itemurl, itemimageurl, partner, data, tkey
-            - ex) ecdsa_sign(privatekey of owner address, owner +'|'+ name +'|'+ url +'|'+ imageurl+'|'+category+'|'+itemurl+'|'+itemimageurl+'|'+partner+'|'+data+'|'+tkey)
+            - ECDSA sign for concat owner, name, url, imageurl, category, itemurl, itemimageurl, data, tkey
+            - ex) ecdsa_sign(privatekey of owner address, owner +'|'+ name +'|'+ url +'|'+ imageurl+'|'+category+'|'+itemurl+'|'+itemimageurl+'|'+data+'|'+tkey)
 
       responses:
         "200":
@@ -409,28 +444,6 @@ paths:
                 description: new MRC400 Token ID
         "405":
           description: Missing or invalid RSA key
-
-  /mrc400/{mrc400id}:
-    get:
-      tags:
-        - MRC400
-      summary: Get information of MRC400
-      parameters:
-        - name: mrc400id
-          in: path
-          description: MRC400 Token ID
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: successful operation
-          content:
-            "*/*":
-              schema:
-                $ref: "#/components/schemas/MRC400"
-        "404":
-          description: MRC400 not found
     put:
       tags:
         - MRC400
@@ -452,41 +465,37 @@ paths:
         - name: name
           in: query
           example: Meta-RPG
-          description: |
-            - MRC400 Name
-            - **This value is does not have any effect on Metacoin or Metacoin-based blockchain**
+          description: If set to an empty string, the existing value is not changed.
           schema:
             type: string
-            minLength: 1
+            format: Metacoin Address
+            minLength: 0
             maxLength: 128
           required: true
         - name: url
           in: query
-          description: |
-            - MRC400 Project URL
-            - **This value is does not have any effect on Metacoin or Metacoin-based blockchain**
+          description: If set to an empty string, the existing value is not changed.
           example: https://mrc400-project.com/
           schema:
             type: string
-            minLength: 1
+            minLength: 0
             maxLength: 255
           required: true
         - name: imageurl
           in: query
-          description: |
-            - MRC400 Project Image URL
-            - **This value is does not have any effect on Metacoin or Metacoin-based blockchain**
+          description: If set to an empty string, the existing value is not changed.
           example: https://mrc400-project.com/images/project.png
           schema:
             type: string
-            minLength: 1
+            minLength: 0
             maxLength: 255
           required: true
         - name: allowtoken
           in: query
           description: |
-            - Only designated tokens and Metacoin (Token ID: 0) can be used for MRC401 token auctions and sales under this MRC400 token
-            - If this value is "0" or empty, all tokens can be used in all sales/auctions.
+            - Only designated tokens and Metacoin (Token ID: 0) can be used for MRC401 auctions and sales under this MRC400
+            - If not specified, set to "0"
+            - If you do not want to change this value, you must send the same value as the old one.
           example: "0"
           schema:
             type: string
@@ -496,105 +505,56 @@ paths:
           required: true
         - name: category
           in: query
-          description: |
-            - This value refers to the classification in which the MRC400 token is used.  It does not affect Metacoin or Metacoin-based blockchains.
-            - **This value is does not have any effect on Metacoin or Metacoin-based blockchain**
+          description: If set to an empty string, the existing value is not changed.
           example: "Baseball Card"
           schema:
             type: string
             format: int
-            minLength: 1
+            minLength: 0
             maxLength: 64
           required: true
         - name: description
           in: query
-          description: |
-            - Set the field where MRC401 Token is used
-            - This value is a description of the MRC400 Token and does not have any effect on Metacoin or Metacoin-based blockchain.
-            - **This value is does not have any effect on Metacoin or Metacoin-based blockchain**
+          description: If set to an empty string, the existing value is not changed.
           example: "Metacoin NFT base RPG Game"
           schema:
             type: string
             format: int
-            minLength: 1
+            minLength: 0
             maxLength: 4096
           required: true
 
         - name: itemurl
           in: query
-          description: |
-            - Specify the URL of JSON Data that stores detailed data of MRC401 token.
-            - If the `url` value of MRC401 Token is an empty string, this value is used.
-            - The URI value allows for ID substitution by clients. If the string {id} exists in any URI, clients MUST replace this with the actual token ID in hexadecimal form. This allows for a large number of tokens to use the same on-chain string by defining a URI once, for that large number of tokens.
-            - This value is the URL of a JSON file that stores data that can be referenced by an application using MRC401 Token
-            - **This value is does not have any effect on Metacoin or Metacoin-based blockchain**
+          description: If set to an empty string, the existing value is not changed.
           example: "https://mrc400-project.com/info/{id}"
           schema:
             type: string
             format: int
-            minLength: 1
+            minLength: 0
             maxLength: 255
           required: true
 
         - name: itemimageurl
           in: query
-          description: |
-            - Specify the image URL of the MRC401 token.
-            - If the `imageurl` value of MRC401 Token is an empty string, this value is used.
-            - The URI value allows for ID substitution by clients. If the string {id} exists in any URI, clients MUST replace this with the actual token ID in hexadecimal form. This allows for a large number of tokens to use the same on-chain string by defining a URI once, for that large number of tokens.
-            - This value is the URL of the image to be used when displaying MRC401 Token in an application that uses MRC401 Token
-            - **This value is does not have any effect on Metacoin or Metacoin-based blockchain**
+          description: If set to an empty string, the existing value is not changed.
           example: "https://mrc400-project.com/info/{id}"
           schema:
             type: string
             format: int
-            minLength: 1
+            minLength: 0
             maxLength: 255
           required: true
 
         - name: data
           in: query
-          description: |
-            - MRC400 detail info
-            - Should be json string
-            - **This value is does not have any effect on Metacoin or Metacoin-based blockchain**
+          description: If set to an empty string, the existing value is not changed.
           schema:
             type: string
             format: int
-            minLength: 1
+            minLength: 0
             maxLength: 4096
           required: true
-
-        - name: socialmedia
-          in: query
-          schema:
-            type: string
-            format: json_encode
-            minLength: 1
-            maxLength: 40960
-          required: false
-          example: {"facebook" : "https://facebook.com/demo", "homepage":"https://homepage.com"}
-          description: |
-            - Specifies the SNS URL for this project.
-            - Should be json string
-            - **This value is does not have any effect on Metacoin or Metacoin-based blockchain**
-
-        - name: partner
-          in: query
-          schema:
-            type: string
-            format: json_encode
-            minLength: 1
-            maxLength: 40960
-          required: false
-          example: {"MTrqP2QkpBgBfNwgXsyGk3aWKtt3lQp369797277" : "partner", "MTL97iMddTPADBUethWmlIzx3e6mawn724e865aa":"creator","MT7LMaOd9bREtTUP23m0Ge83yA7VNzhUf0399772":"saller"}
-          description: |
-            - Specifies the address to manage the MRC401 included in this project.
-            - The permissions that can be specified are as follows:
-            - partner: MRC401 creation, update the MRC401 you created, selling while creating MRC401, sale/sale cancellation of MRC401 items that have never been traded/transferred after creation, auction/auction cancellation
-            - seller: Sell while creating MRC401, sell/cancel sale of MRC401 items that have never been traded/transferred after creation, cancel auction/auction
-            - creator: MRC401 creation, update the MRC401 you created
-
         - name: tkey
           in: query
           description: Temporary key for Sign(return value of GET /getkey/transfer)
@@ -622,7 +582,28 @@ paths:
                     type: string
                     description: Transaction ID
         "405":
-          description: Missing or invalid RSA key          
+          description: Missing or invalid RSA key
+  /mrc400/{mrc400id}:
+    get:
+      tags:
+        - MRC400
+      summary: Get information of MRC400
+      parameters:
+        - name: mrc400id
+          in: path
+          description: MRC400 Token ID
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: successful operation
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/MRC400"
+        "404":
+          description: MRC400 not found
   /mrc401/{mrc400id}:
     post:
       tags:
@@ -637,12 +618,15 @@ paths:
             type: string
             minLength: 40
             maxLength: 40
-        - name: itemdata[]
+        - name: itemdata
           in: query
-          description: |
-            - MRC401 token data
-            - This parameter must be sent as a json encoded string.
+          description: MRC401 token data
           schema:
+            type: array
+            format: json
+            minItems: 1
+            maxItems: 100
+            items:
               type: object
               properties:
                 item_id:
@@ -735,7 +719,6 @@ paths:
             "*/*":
               schema:
                 type: object
-                format: json_encode
                 properties:
                   transaction_id:
                     type: string
@@ -748,7 +731,7 @@ paths:
         - MRC401
       summary: GET MRC401 Token
       parameters:
-        - name: mrc401id
+        - name: mrc400id
           in: path
           example: "MRC400_db7da6bc848ba62e621aede40f75dc760_0000000000000000000000000000000000000001"
           description: MRC401 Token ID
@@ -841,16 +824,27 @@ paths:
           schema:
             type: string
             format: Metacoin Adderess
-        - name: itemdata[]
-          in: query
+        - name: mrc400id
+          in: path
           description: |
-            - MRC401 Token information to be sold
-            - This parameter must be sent as a json encoded string.
-            - The quantity that can be sold at one time is 1~1024.
-          example: '[{"MRC400_db7da6bc848ba62e621aede40f75dc760_0000000000000000000000000000000000000001","MRC400_db7da6bc848ba62e621aede40f75dc760_0000000000000000000000000000000000000002"}]'
+            - MRC400 Token ID
+            - The mrc400 token ID of the mrc401 item specified in itemdata.
+          required: true
           schema:
-            type: object
-            properties:
+            type: string
+            minLength: 40
+            maxLength: 40
+        - name: itemdata
+          in: query
+          description: MRC401 Token information to be sold
+          schema:
+            type: array
+            format: json
+            minItems: 1
+            maxItems: 100
+            items:
+              type: object
+              properties:
                 id:
                   example: "MRC400_db7da6bc848ba62e621aede40f75dc760_0000000000000000000000000000000000000001"
                   type: string
@@ -858,6 +852,7 @@ paths:
                   maxLength: 81
                   description: |
                     - MRC401 Item ID
+                    - It is the MRC401 Token belonging to the token specified in mrc400id
                 price:
                   example: "10000000000"
                   type: string
@@ -873,10 +868,10 @@ paths:
                   maximum: 9999999999999999999999999999999999999999
                   description: |
                     - This is the token that the owner will receive when melting this token.
-                    - If the value of allowtoken in MRC400 is specified, only Metacoin and the specified token are allowed.
+                    - Only allowtoken and "0" specified in MRC400 are possible.
         - name: tkey
           in: query
-          description: Temporary key for Sign(return value of GET /nonce)
+          description: Temporary key for Sign(return value of GET /getkey/transfer)
           required: true
           schema:
             type: string
@@ -914,6 +909,16 @@ paths:
           schema:
             type: string
             format: Metacoin Adderess
+        - name: mrc400id
+          in: path
+          description: |
+            - MRC400 Token ID
+            - The mrc400 token ID of the mrc401 item specified in itemdata.
+          required: true
+          schema:
+            type: string
+            minLength: 40
+            maxLength: 40
         - name: itemdata
           in: query
           description: |
@@ -1072,6 +1077,16 @@ paths:
           schema:
             type: string
             format: Metacoin Adderess
+        - name: mrc400id
+          in: path
+          description: |
+            - MRC400 Token ID
+            - The mrc400 token ID of the mrc401 item specified in itemdata.
+          required: true
+          schema:
+            type: string
+            minLength: 40
+            maxLength: 40
         - name: itemdata
           in: query
           description: MRC401 Token information to be auction
@@ -1180,6 +1195,16 @@ paths:
           schema:
             type: string
             format: Metacoin Adderess
+        - name: mrc400id
+          in: path
+          description: |
+            - MRC400 Token ID
+            - The mrc400 token ID of the mrc401 item specified in itemdata.
+          required: true
+          schema:
+            type: string
+            minLength: 40
+            maxLength: 40
         - name: itemdata
           in: query
           description: |
@@ -1333,7 +1358,8 @@ paths:
                     type: string
                     description: Transaction ID
         "404":
-          description: MRC401 not found
+          description: MRC400 not found
+
 
   /mrc402:
       post:
@@ -1341,147 +1367,63 @@ paths:
           - MRC402
         summary: Create MRC402 Token
         parameters:
-        - name: name
-          in: query
-          example: Meta-NFT
-          description: |
-            - MRC402 Name
-            - **This value is does not have any effect on Metacoin or Metacoin-based blockchain**
-          schema:
-            type: string
-            minLength: 1
-            maxLength: 128
-          required: true
-        - name: creator
-          in: query
-          example: MTATLnT6SGKE8RU0CBPoDRfUXL5lr4SLece1a6ee
-          schema:
-            type: string
-            format: Metacoin Address
-            minLength: 40
-            maxLength: 40
-          description: MRC402 Owner
-          required: true
-        - name: url
-          in: query
-          description: |
-            - MRC400 Project URL
-            - **This value is does not have any effect on Metacoin or Metacoin-based blockchain**
-          example: https://mrc402-project.com/
-          schema:
-            type: string
-            minLength: 1
-            maxLength: 255
-          required: true
-        - name: imageurl
-          in: query
-          description: |
-            - MRC400 Project Image URL
-            - **This value is does not have any effect on Metacoin or Metacoin-based blockchain**
-          example: https://mrc400-project.com/images/project.png
-          schema:
-            type: string
-            minLength: 1
-            maxLength: 255
-          required: true
-        - name: allowtoken
-          in: query
-          description: |
-            - Only designated tokens and Metacoin (Token ID: 0) can be used for MRC401 token auctions and sales under this MRC400 token
-            - If not specified, set to "0"
-          example: "0"
-          schema:
-            type: string
-            format: int
-            minLength: 1
-            maxLength: 16
-          required: true
-        - name: category
-          in: query
-          description: |
-            - This value refers to the classification in which the MRC400 token is used.  It does not affect Metacoin or Metacoin-based blockchains.
-            - **This value is does not have any effect on Metacoin or Metacoin-based blockchain**
-          example: "Baseball Card"
-          schema:
-            type: string
-            format: int
-            minLength: 1
-            maxLength: 64
-          required: true
-        - name: description
-          in: query
-          description: |
-            - Set the field where MRC401 Token is used
-            - This value is a description of the MRC400 Token and does not have any effect on Metacoin or Metacoin-based blockchain.
-            - **This value is does not have any effect on Metacoin or Metacoin-based blockchain**
-          example: "Metacoin NFT base RPG Game"
-          schema:
-            type: string
-            format: int
-            minLength: 1
-            maxLength: 4096
-          required: true
-
-        - name: itemurl
-          in: query
-          description: |
-            - Specify the URL of JSON Data that stores detailed data of MRC401 token.
-            - If the `url` value of MRC401 Token is an empty string, this value is used.
-            - The URI value allows for ID substitution by clients. If the string {id} exists in any URI, clients MUST replace this with the actual token ID in hexadecimal form. This allows for a large number of tokens to use the same on-chain string by defining a URI once, for that large number of tokens.
-            - This value is the URL of a JSON file that stores data that can be referenced by an application using MRC401 Token
-            - **This value is does not have any effect on Metacoin or Metacoin-based blockchain**
-          example: "https://mrc400-project.com/info/{id}"
-          schema:
-            type: string
-            format: int
-            minLength: 1
-            maxLength: 255
-          required: true
-
-        - name: itemimageurl
-          in: query
-          description: |
-            - Specify the image URL of the MRC401 token.
-            - If the `imageurl` value of MRC401 Token is an empty string, this value is used.
-            - The URI value allows for ID substitution by clients. If the string {id} exists in any URI, clients MUST replace this with the actual token ID in hexadecimal form. This allows for a large number of tokens to use the same on-chain string by defining a URI once, for that large number of tokens.
-            - This value is the URL of the image to be used when displaying MRC401 Token in an application that uses MRC401 Token
-            - **This value is does not have any effect on Metacoin or Metacoin-based blockchain**
-          example: "https://mrc400-project.com/info/{id}"
-          schema:
-            type: string
-            format: int
-            minLength: 1
-            maxLength: 255
-          required: true
-
-        - name: data
-          in: query
-          description: |
-            - MRC400 detail info
-            - Should be json string
-            - **This value is does not have any effect on Metacoin or Metacoin-based blockchain**
-          schema:
-            type: string
-            format: int
-            minLength: 1
-            maxLength: 4096
-          required: true
-        - name: tkey
-          in: query
-          description: Temporary key for Sign(return value of GET /getkey/transfer)
-          required: true
-          schema:
-            type: string
-        - name: signature
-          in: query
-          required: true
-          schema:
-            type: string
-            format: base64
-          description: |
-            - ECDSA sign for concat owner, name, url, imageurl, category, itemurl, itemimageurl, data, tkey
-            - ex) ecdsa_sign(privatekey of owner address, owner +'|'+ name +'|'+ url +'|'+ imageurl+'|'+category+'|'+itemurl+'|'+itemimageurl+'|'+data+'|'+tkey)
-
+          - name: mrc400id
+            in: path
+            description: MRC400 Token ID
+            required: true
+            schema:
+              type: string
+              minLength: 40
+              maxLength: 40
+          - name: itemdata
+            in: query
+            description: MRC402 token data
+            schema:
+              type: array
+              format: json
+              minItems: 1
+              maxItems: 100
+              items:
+                type: object
+                properties:
+                  initial_reserve:
+                    example: "10000000000"
+                    type: string
+                    format: integer
+                    minimum: 1
+                    maximum: 9999999999999999999999999999999999999999
+                    description: |
+                      - This is the amount the owner will receive when melting this token.
+                      - When creating a token, the amount specified is deducted from the creator's wallet.
+                      - Currency is the token specified in `initial_token`.
+                  sell_fee:
+                    example: "0"
+                    type: string
+                    format: float
+                    minimum: 0
+                    maximum: 99.9999
+                    description: |
+                      - This is the fee that MRC400 Token holders will receive when trading. If this value is 10, when traded for 300 MTC, the MRC400 token holder will receive 30 MTC, 10% of 300 MTC.
+                  melt_fee:
+                    example: "0"
+                    type: string
+                    format: float
+                    minimum: 0
+                    maximum: 99.9999
+                    description: |
+                      - This is the fee that MRC400 token holders receive when they melt MRC402 items. If this value is 10 and the value of initial_reserve is 300 MTC, then when this token holder melts this token, he will receive 30 MTC, 10% of 300 MTC.
+                  transferable:
+                    type: string
+                    example: "Permanent"
+                    enum:
+                      - Permanent
+                      - Bound
+                      - Temporary
+                    description: |
+                      - It means the availability of transactions and transfers.
+                      - Permanent: Transaction, Transfer available
+                      - Bound: Transaction, transfer impossible
+                      - Temprary: Transaction, transfer, but MRC400 creator can change to Permanent, Bound
         responses:
           "200":
             description: successful operation
@@ -1501,7 +1443,7 @@ paths:
         - MRC402
       summary: GET MRC402 Token
       parameters:
-        - name: mrc402id
+        - name: mrc400id
           in: path
           example: "MRC400_db7da6bc848ba62e621aede40f75dc760_0000000000000000000000000000000000000001"
           description: MRC402 Token ID
@@ -1578,7 +1520,7 @@ paths:
         "404":
           description: MRC400 not found
 
-  /mrc402/sell/{mrc402id}:
+  /mrc402/sell:
     post:
       tags:
         - MRC402
@@ -1594,7 +1536,7 @@ paths:
           schema:
             type: string
             format: Metacoin Adderess
-        - name: mrc402id
+        - name: mrc400id
           in: path
           description: |
             - MRC400 Token ID
@@ -1667,7 +1609,7 @@ paths:
                     description: Transaction ID
         "404":
           description: MRC400 not found
-  /mrc402/unsell/{mrc402_dex_id}:
+  /mrc402/unsell:
     post:
       tags:
         - MRC402
@@ -1679,10 +1621,11 @@ paths:
           schema:
             type: string
             format: Metacoin Adderess
-        - name: mrc402_dex_id
+        - name: mrc400id
           in: path
           description: |
-            - MRC402 DEX ID
+            - MRC400 Token ID
+            - The mrc400 token ID of the mrc402 item specified in itemdata.
           required: true
           schema:
             type: string
@@ -1829,7 +1772,7 @@ paths:
         "404":
           description: MRC400 not found
 
-  /mrc402/auction/{mrc402id}:
+  /mrc402/auction:
     post:
       tags:
         - MRC402
@@ -1846,10 +1789,11 @@ paths:
           schema:
             type: string
             format: Metacoin Adderess
-        - name: mrc402id
+        - name: mrc400id
           in: path
           description: |
-            - MRC402 Token ID
+            - MRC400 Token ID
+            - The mrc400 token ID of the mrc402 item specified in itemdata.
           required: true
           schema:
             type: string
@@ -1949,7 +1893,7 @@ paths:
         "404":
           description: MRC400 not found
 
-  /mrc402/unauction/{mrc402_dex_id}:
+  /mrc402/unauction:
     post:
       tags:
         - MRC402
@@ -1963,10 +1907,11 @@ paths:
           schema:
             type: string
             format: Metacoin Adderess
-        - name: mrc402_dex_id
+        - name: mrc400id
           in: path
           description: |
-            - MRC402 DEX ID
+            - MRC400 Token ID
+            - The mrc400 token ID of the mrc402 item specified in itemdata.
           required: true
           schema:
             type: string
@@ -2563,6 +2508,48 @@ paths:
                 $ref: "#/components/schemas/Transaction"
         "404":
           description: Transaction not found
+  /getkey/{types}/{address}:
+    get:
+      tags:
+        - Transfer
+      summary: Get Temporary key for Transfer, Dapp Create or Token Create
+      description: |
+        - All temporary keys expire after success transaction create.
+
+        - Used to ensure that signatures used in transactions are not reused.
+      parameters:
+        - name: types
+          in: path
+          description: Temporary key type or usage
+          required: true
+          schema:
+            type: string
+            enum:
+              - transfer
+              - token
+              - dapp
+              - exchange
+              - mrc040
+              - mrc100
+              - mrc800
+        - name: address
+          in: path
+          required: true
+          description: |
+            Temporarykey owner address
+          schema:
+            type: string
+            format: Metacoin address
+      responses:
+        "200":
+          description: successful operation
+          content:
+            "*/*":
+              schema:
+                type: string
+                description: Temporary key for transaction
+        "400":
+          description: type value is invalid
 
   /token/{token}:
     get:
@@ -2908,27 +2895,134 @@ paths:
           description: successful create token.
         "400":
           description: token update error.
-  /token/dex/{mrc010dexid}:
-    get:
+
+  /tokenUpdate/TokenBase/{tkey}/{token}/{baseToken}:
+    post:
       tags:
         - Token
-      summary: Get information of MRC010 DEX
+      summary: Set or Remove BaseToken for MRC040
+      description: |
+        - Set base token id for transactions using MRC040
+        - You have to register your token in the target with the token specified by basetoken.
+        - If this value is changed, all transactions waited can no longer be traded.
       parameters:
-        - name: mrc010dexid
+        - name: tkey
           in: path
-          description: MRC010 DEX ID
+          description: Temporary key for Sign(return value of GET /getkey/token/{tokwn owner})
           required: true
           schema:
             type: string
+        - name: token
+          in: path
+          description: Token ID
+          required: true
+          schema:
+            type: string
+        - name: baseToken
+          in: path
+          description: Base Token ID, If it is 0, basetoken is deleted.
+          required: true
+          schema:
+            type: string
+        - name: signature
+          in: query
+          required: true
+          schema:
+            type: string
+            format: base64
+          description: |
+            - ECDSA sign for concat Address of Token owner, token, tkey
+            - ex) ecdsa_sign(token owner's privatekey, Address of Token owner + '|' + token + '|' + baseToken + '|' + tkey)
       responses:
         "200":
-          description: successful operation
-          content:
-            "*/*":
-              schema:
-                $ref: "#/components/schemas/MRC010DEX"
-        "404":
-          description: MRC010 DEX not found
+          description: successful create token.
+        "400":
+          description: token create error.
+
+  /tokenUpdate/TokenTargetAdd/{tkey}/{token}/{targetToken}:
+    post:
+      tags:
+        - Token
+      summary: Add TargetToken for MRC040
+      description: |
+        - Set target token id for transactions using MRC040
+        - You have to register your token in the basetoken with the token specified by targettoken.
+        - If this value is changed, all transactions waited can no longer be traded.
+      parameters:
+        - name: tkey
+          in: path
+          description: Temporary key for Sign(return value of GET /getkey/token/{tokwn owner})
+          required: true
+          schema:
+            type: string
+        - name: token
+          in: path
+          description: Token ID
+          required: true
+          schema:
+            type: string
+        - name: targetToken
+          in: path
+          description: Target Token ID for add
+          required: true
+          schema:
+            type: string
+        - name: signature
+          in: query
+          required: true
+          schema:
+            type: string
+            format: base64
+          description: |
+            - ECDSA sign for concat Address of Token owner, targetToken, tkey
+            - ex) ecdsa_sign(token owner's privatekey, Address of Token owner + '|' + token + '|'+ targetToken + '|' + tkey)
+      responses:
+        "200":
+          description: successful create token.
+        "400":
+          description: token create error.
+
+  /tokenUpdate/TokenTargetRemove/{tkey}/{token}/{targetToken}:
+    post:
+      tags:
+        - Token
+      summary: Remove Token in TargetToken of token
+      description: |
+        - Set target token id for transactions using MRC040
+        - If the value of basetoken is Token and the value of targettoken is targetTokenSN, no longer trade.
+      parameters:
+        - name: tkey
+          in: path
+          description: Temporary key for Sign(return value of GET /getkey/token/{tokwn owner})
+          required: true
+          schema:
+            type: string
+        - name: token
+          in: path
+          description: Token ID
+          required: true
+          schema:
+            type: string
+        - name: targetToken
+          in: path
+          description: Target Token ID for remove
+          required: true
+          schema:
+            type: string
+        - name: signature
+          in: query
+          required: true
+          schema:
+            type: string
+            format: base64
+          description: |
+            - ECDSA sign for concat Address of Token owner, targetToken, tkey
+            - ex) ecdsa_sign(token owner's privatekey, Address of Token owner + '|' + token + '|' + targetToken + '|' + tkey)
+      responses:
+        "200":
+          description: successful create token.
+        "400":
+          description: token create error.
 
   /token/sell/{mrc010id}:
     post:
@@ -2937,13 +3031,8 @@ paths:
       summary: Sell MR010(Token)
       description: |
         - If other users purchase tokens, they will receive the specified amount of sales.
-        - If 'platform_commission' is 10, the seller receives only 90% of the commission excluding the 10% commission.
+        - If `platform_commission` is 10, 10% of the transaction amount will be transferred to the MRC400 token holder designated in the MRC402 token, and only 90% of the fee excluding the 10% fee will be received by the MRC402 token holder.
         - If the value of `platform_commission` is 0, no commission is paid.
-        - You can sell Metacoin or MRC010 token as Metacoin or MRC010 token.
-        - Tokens or coins being sold are traded in a decentralized manner.
-        - This is the true meaning of DEX.
-        - You can designate a platform that takes a certain percentage of the transaction price when trading.
-        - The transaction amount is the minimum amount per transaction unit.
       parameters:
         - name: mrc010id
           in: path
@@ -3056,215 +3145,54 @@ paths:
       responses:
         "200":
           description: successful operation
-          content: 
-            '*/*':
+          content:
+            "*/*":
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/txresponse'
+                type: object
                 properties:
-                  mrc010dexid:
+                  transaction_id:
                     type: string
-                    description: |
-                      - MRC010 DEX ID
-                      - This value is used when canceling a sale or making a purchase.
-        "400":
-          $ref: "#/components/responses/nodeerror"
+                    description: Transaction ID
+        "404":
+          description: MRC400 not found
 
-        "412":
-          $ref: "#/components/responses/paramerror"
-
-
-  /token/buy/{mrc010dexid}:
+  /token/dex/unsell:
     post:
       tags:
-        - Token
-      summary: MRC010 Token Sale Cancellation
+        - MRC402
+      summary: MRC402 token sale canceled
       parameters:
-        - name: mrc010dexid
-          in: path
-          description: MRC010 DEX ID
-          required: true
-          schema:
-            type: string
-            format: MRC010 DEX ID
-        - name: amount
+        - name: seller
           in: query
-          description: buy amount
-          required: true
-          schema:
-            type: string
-            format: integer
-        - name: tkey
-          in: query
-          description: Temporary key for Sign(return value of GET /getkey/transfer)
-          required: true
-          schema:
-            type: string
-        - name: signature
-          in: query
-          required: true
-          schema:
-            type: string
-            format: base64
-          description: |
-            - ECDSA sign for concat seller, itemdata, tkey
-            - ex) ecdsa_sign(privatekey of mrc010dexid creator address, mrc010dexid +'|'+ tkey)
-      responses:
-        "200":
-          $ref: '#/components/responses/txresponse'
-
-        "400":
-          $ref: "#/components/responses/nodeerror"
-
-        "412":
-          $ref: "#/components/responses/paramerror"
-
-  /token/unsell/{mrc010dexid}:
-    post:
-      tags:
-        - Token
-      summary: MRC010 Token Sale Cancellation
-      parameters:
-        - name: mrc010dexid
-          in: path
-          description: MRC010 DEX ID
-          required: true
-          schema:
-            type: string
-            format: MRC010 DEX ID
-        - name: tkey
-          in: query
-          description: Temporary key for Sign(return value of GET /getkey/transfer)
-          required: true
-          schema:
-            type: string
-        - name: signature
-          in: query
-          required: true
-          schema:
-            type: string
-            format: base64
-          description: |
-            - ECDSA sign for concat seller, itemdata, tkey
-            - ex) ecdsa_sign(privatekey of mrc010dexid creator address, mrc010dexid +'|'+ tkey)
-      responses:
-        "200":
-          $ref: '#/components/responses/txresponse'
-
-        "400":
-          $ref: "#/components/responses/nodeerror"
-
-        "412":
-          $ref: "#/components/responses/paramerror"
-
-
-
-
-  /token/reqsell/{mrc010id}:
-    post:
-      tags:
-        - Token
-      summary: Request sell MR010(Token)
-      description: |
-        - Register DEX to purchase token ID `mrc010` by paying the price per `min_trade_unit` for token ID `token`.
-        - If 'platform_commission' is 10, you must pay an additional 10% of the purchase amount, and 10% of the transaction amount is sent to the platform_address when making a transaction.
-        - If the 'platform_commission' value is 0, no commission is paid.
-        - You can sell Metacoin or MRC010 tokens as Metacoin or MRC010 tokens.
-        - The tokens or coins sold are traded in a decentralized way.
-      parameters:
-        - name: mrc010id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: integer
-          description: |
-            - ID of the token you want to buy
-        - name: address
-          in: query
-          required: true
+          description: MRC402 Token owner address
           schema:
             type: string
             format: Metacoin Adderess
+        - name: mrc400id
+          in: path
           description: |
-            - The seller's metacoin address
-        - name: amount
-          in: query
-          description: |
-            - Quantity of tokens to be buy
+            - MRC400 Token ID
+            - The mrc400 token ID of the mrc402 item specified in itemdata.
           required: true
           schema:
             type: string
-            format: integer
-        - name: min_trade_unit
+            minLength: 40
+            maxLength: 40
+        - name: itemdata
           in: query
           description: |
-            - Minimum purchase quantity
-            - When accepting this purchase requisition, the quantity must be a multiple of this value.
-            - If not specified, it is treated as "1".
-          required: false
+            - MRC402 Token id list to be sale cancel
+            - It is the MRC402 Token belonging to the token specified in mrc400id
+          example: '{"MRC400_db7da6bc848ba62e621aede40f75dc760_0000000000000000000000000000000000000001","MRC400_db7da6bc848ba62e621aede40f75dc760_0000000000000000000000000000000000000002"}'
           schema:
-            type: string
-            enum:
-              - 1
-              - 10
-              - 100
-              - 1000
-              - 10000
-              - 100000
-              - 1000000
-              - 10000000
-              - 100000000
-        - name: token
-          in: query
-          required: true
-          schema:
-            type: string
-            format: integer
-          description: ID of the token to be paid to the seller
-        - name: price
-          in: query
-          required: true
-          schema:
-            type: string
-            format: integer
-          description: Amount to be paid for purchase per `min_trade_unit`
-        - name: platform_name
-          in: query
-          required: false
-          schema:
-            type: string
-            format: integer
-          description: The name of the platform that supports this DEX transaction
-          example: Mefi
-        - name: platform_url
-          in: query
-          required: false
-          schema:
-            type: string
-            format: url
-          description: The URL of the platform that supports this DEX transaction
-          example: https://mefi.io
-        - name: platform_commission
-          in: query
-          required: false
-          schema:
-            type: string
-            format: float
-            minimum: 0.00
-            maximum: 10.00
-          example: 5.75
-          description: |
-            - Percentage of fees taken from the platform when a transaction is concluded
-            - If the value of `platform_address` is not specified, no fee is paid.
-        - name: platform_address
-          in: query
-          required: false
-          schema:
-            type: string
-            format: Metacoin address
-          description: |
-            - Metacoin address to receive commission if the value of platform_commission is greater than 0
+            type: array
+            format: json
+            minItems: 1
+            maxItems: 100
+            items:
+              type: string
+              minLength: 81
+              maxLength: 81
         - name: tkey
           in: query
           description: Temporary key for Sign(return value of GET /getkey/transfer)
@@ -3276,115 +3204,23 @@ paths:
           required: true
           schema:
             type: string
+            format: base64
           description: |
-            - ECDSA sign for concat seller address, amount, mrc010id, price, token, platform_name, platform_url, platform_address, platform_commission, tkey
-            - ex) ecdsa_sign(privatekey of seller address, address +'|'+ amount +'|'+ mrc010id +'|'+ 
-            price +'|'+ token +'|'+ platform_name +'|'+ platform_url +'|'+ platform_address +'|'+ platform_commission +'|'+ tkey)
+            - ECDSA sign for concat seller, itemdata, tkey
+            - ex) ecdsa_sign(privatekey of owner address, seller +'|'+ itemdata +'|'+ tkey)
       responses:
         "200":
           description: successful operation
-          content: 
-            '*/*':
+          content:
+            "*/*":
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/txresponse'
+                type: object
                 properties:
-                  mrc010dexid:
+                  transaction_id:
                     type: string
-                    description: |
-                      - MRC010 DEX ID
-                      - This value is used when canceling a sale or making a purchase.
-        "400":
-          $ref: "#/components/responses/nodeerror"
-
-        "412":
-          $ref: "#/components/responses/paramerror"
-
-
-  /token/acceptreqsell/{mrc010dexid}:
-    post:
-      tags:
-        - Token
-      summary: Accepting a sales request
-      parameters:
-        - name: mrc010dexid
-          in: path
-          description: MRC010 DEX ID
-          required: true
-          schema:
-            type: string
-            format: MRC010 DEX ID
-        - name: amount
-          in: query
-          description: buy amount
-          required: true
-          schema:
-            type: string
-            format: integer
-        - name: tkey
-          in: query
-          description: Temporary key for Sign(return value of GET /getkey/transfer)
-          required: true
-          schema:
-            type: string
-        - name: signature
-          in: query
-          required: true
-          schema:
-            type: string
-            format: base64
-          description: |
-            - ECDSA sign for concat seller, itemdata, tkey
-            - ex) ecdsa_sign(privatekey of mrc010dexid creator address, mrc010dexid +'|'+ tkey)
-      responses:
-        "200":
-          $ref: '#/components/responses/txresponse'
-
-        "400":
-          $ref: "#/components/responses/nodeerror"
-
-        "412":
-          $ref: "#/components/responses/paramerror"
-
-  /token/unreqsell/{mrc010dexid}:
-    post:
-      tags:
-        - Token
-      summary: Cancel Sales Requisition
-      parameters:
-        - name: mrc010dexid
-          in: path
-          description: MRC010 DEX ID
-          required: true
-          schema:
-            type: string
-            format: MRC010 DEX ID
-        - name: tkey
-          in: query
-          description: Temporary key for Sign(return value of GET /getkey/transfer)
-          required: true
-          schema:
-            type: string
-        - name: signature
-          in: query
-          required: true
-          schema:
-            type: string
-            format: base64
-          description: |
-            - ECDSA sign for concat seller, itemdata, tkey
-            - ex) ecdsa_sign(privatekey of mrc010dexid creator address, mrc010dexid +'|'+ tkey)
-      responses:
-        "200":
-          $ref: '#/components/responses/txresponse'
-
-        "400":
-          $ref: "#/components/responses/nodeerror"
-
-        "412":
-          $ref: "#/components/responses/paramerror"
-
-
+                    description: Transaction ID
+        "404":
+          description: MRC400 not found  
   /transfer:
     post:
       tags:
@@ -3778,6 +3614,1969 @@ paths:
                 echo "Multi Transfer $from_addr => $row['address'], Token: $token, Amount: $row['amount'], TXID: $r\r\n";
             }
 
+  /exchange:
+    post:
+      tags:
+        - Transfer
+      summary: Tokens are exchanged with each other.
+      parameters:
+        - name: fromAddr
+          in: query
+          schema:
+            type: string
+            format: Metacoin Address
+          required: true
+        - name: fromAmount
+          in: query
+          schema:
+            type: string
+            format: integer
+          description: Token quantity to send to "toAddr"
+          required: true
+        - name: fromToken
+          in: query
+          schema:
+            type: string
+          description: Token ID to send to "toAddr"
+          required: true
+        - name: fromFeesendto
+          in: query
+          schema:
+            type: string
+            format: Metacoin Address
+          description: |
+            - Address to receive token exchange fee from "fromAddr"
+            - Empty string if you do not pay a fee
+        - name: fromFeeamount
+          in: query
+          schema:
+            type: string
+            format: integer
+          description: |
+            - Amount for token exchange fee from "fromAddr"
+            - Empty string if you do not pay a fee
+        - name: fromFeetoken
+          in: query
+          schema:
+            type: string
+            format: integer
+          description: |
+            - Token ID for token exchange fee from "fromAddr"
+            - Empty string if you do not pay a fee
+        - name: fromTag
+          in: query
+          schema:
+            type: string
+            minLength: 0
+            maxLength: 64
+          description: |
+            - address tag of fromAddr or Empty string
+            - Up to 64 characters are stored, and characters after 64 characters are not stored.
+        - name: fromMemo
+          in: query
+          schema:
+            type: string
+            minLength: 0
+            maxLength: 2048
+          description: |
+            - memo of fromAddr or Empty string
+            - Up to 2048 characters are stored, and characters after 2048 characters are not stored.
+        - name: fromSign
+          in: query
+          schema:
+            type: string
+            format: base64
+          description: |
+            - ECDSA sign for concat fromAddr, fromAmount, fromToken, fromFeeAddr, fromFeeAmount, fromFeeToken, toAddr, toAmount, toToken, fromTKey
+            - ex) ecdsa_sign(fromAddr's privatekey, fromAddr + '|' + fromAmount + '|' + fromToken + '|' + fromFeeAddr + '|' + fromFeeAmount + '|' + fromFeeToken + '|' + toAddr + '|' + toAmount + '|' + toToken + '|' + fromTKey)
+          required: true
+        - name: fromTkey
+          in: query
+          schema:
+            type: string
+          description: fromAddr's exchange temporary key
+          required: true
+        - name: toAddr
+          in: query
+          schema:
+            type: string
+            format: Metacoin Address
+          required: true
+        - name: toAmount
+          in: query
+          schema:
+            type: string
+            format: integer
+          description: Token quantity to send to "fromAddr"
+          required: true
+        - name: toToken
+          in: query
+          schema:
+            type: string
+          description: Token ID to send to "fromAddr"
+          required: true
+        - name: toFeesendto
+          in: query
+          schema:
+            type: string
+            format: Metacoin Address
+          description: |
+            - Address to receive token exchange fee from "toAddr"
+            - Empty string if you do not pay a fee
+        - name: toFeeamount
+          in: query
+          schema:
+            type: string
+            format: integer
+          description: |
+            - Amount for token exchange fee to "toAddr"
+            - Empty string if you do not pay a fee
+        - name: toFeetoken
+          in: query
+          schema:
+            type: string
+            format: integer
+          description: |
+            - Token ID for token exchange fee to "toAddr"
+            - Empty string if you do not pay a fee
+        - name: toTag
+          in: query
+          schema:
+            type: string
+            minLength: 0
+            maxLength: 64
+          description: |
+            - address tag of toAddr or Empty string
+            - Up to 64 characters are stored, and characters after 64 characters are not stored.
+        - name: toMemo
+          in: query
+          schema:
+            type: string
+            minLength: 0
+            maxLength: 2048
+          description: |
+            - memo of toAddr or Empty string
+            - Up to 2048 characters are stored, and characters after 2048 characters are not stored.
+        - name: toSign
+          in: query
+          schema:
+            type: string
+            format: base64
+          description: |
+            - ECDSA sign for concat toAddr, toAmount, toToken, toFeeAddr, toFeeAmount, toFeeToken, toAddr, toAmount, toToken, toTKey
+            - ex) ecdsa_sign(toAddr's privatekey, toAddr + '|' + toAmount + '|' + toToken + '|' + toFeeAddr + '|' + toFeeAmount + '|' + toFeeToken + '|' + toAddr + '|' + toAmount + '|' + toToken + '|' + toTKey)
+          required: true
+        - name: toTkey
+          in: query
+          schema:
+            type: string
+          description: toAddr's exchange temporary key
+          required: true
+      responses:
+        "200":
+          description: successful operation
+          content:
+            "*/*":
+              schema:
+                type: object
+                properties:
+                  transaction_id:
+                    type: string
+                    description: Transaction ID
+        "400":
+          description: Metacoin bridge communication error
+        "412":
+          description: See error message
+
+  /mrc020:
+    post:
+      tags:
+        - MRC020
+      summary: NEW MRC-020 data create
+      description: |
+        *** Warning - TESTNET only ***
+        - concat owner, referencekey is must be unique.
+        - if duplication raise error.
+      parameters:
+        - name: owner
+          in: query
+          description: Token Creator
+          required: true
+          schema:
+            type: string
+            format: Metacoin Address
+        - name: algorithm
+          in: query
+          description: Data encryption algorithm
+          required: true
+          schema:
+            type: string
+        - name: data
+          in: query
+          description: Encrypted data(max 2048 bytes)
+          required: true
+          schema:
+            type: string
+            format: base64
+        - name: publickey
+          in: query
+          description: Key to use when decrypting encrypted data
+          required: true
+          schema:
+            type: string
+            format: pem encoding
+        - name: opendate
+          in: query
+          description: publickey public date and time
+          required: true
+          schema:
+            type: integer
+            format: UnixTimestamp (UTC)
+        - name: referencekey
+          in: query
+          description: Reference Key for your(max 64bytes)
+          schema:
+            type: string
+            format: A-Z, a-z, 0-9, _
+        - name: signature
+          in: query
+          required: true
+          schema:
+            type: string
+            format: base64
+          description: |
+            - ECDSA sign for data.
+            - ex) ecdsa_sign(privatekey of owner address, owner +'|'+ data +'|'+ opendate +'|'+referencekey)
+      responses:
+        "200":
+          description: successful operation
+          content:
+            "*/*":
+              schema:
+                type: object
+                properties:
+                  transaction_id:
+                    type: string
+                    description: Transaction ID
+        "400":
+          description: MRC-020 Create error
+
+  /mrc020/{mrc020key}:
+    get:
+      tags:
+        - MRC020
+      summary: Get MRC-020 data
+      description: |
+        *** Warning - TESTNET only ***
+        - If the time at the time of the call is before opendate, the value of the Publickey is empty.
+        - If it is after opendate, then publickey is returned.
+      parameters:
+        - name: mrc020key
+          in: path
+          description: MRC-020 key ('MRC020_' + owner + '_' + referencekey)
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: MRC-020 data
+          content:
+            "*/*":
+              schema:
+                type: object
+                properties:
+                  owner:
+                    description: Token Creator
+                    type: string
+                    format: Metacoin Address
+                  algorithm:
+                    description: Data encryption algorithm
+                    type: string
+                  data:
+                    description: Encrypted data(max 2048 bytes)
+                    type: string
+                    format: base64
+                  publickey:
+                    description: Key to use when decrypting encrypted data
+                    type: string
+                    format: pem encoding
+                  createdate:
+                    description: data create date
+                    type: integer
+                    format: UnixTimestamp (UTC)
+                  opendate:
+                    description: publickey public date and time
+                    type: integer
+                    format: UnixTimestamp (UTC)
+                  referencekey:
+                    description: Reference Key for your(max 64bytes)
+                    type: string
+                    format: A-Z, a-z, 0-9, _
+                  is_open:
+                    type: integer
+                    description: |
+                      - 0 : hide publickey
+                      - 1 : show publickey
+        "400":
+          description: MRC-020 data not exists.
+
+  /mrc040/create/{tkey}:
+    post:
+      tags:
+        - MRC040
+      summary: Create new TOKEN Exchange job
+      description: |
+        - Create DEX item
+      parameters:
+        - name: tkey
+          in: path
+          description: Temporary key for Sign(return value of GET /getkey/mrc040/`owner`)
+          required: true
+          schema:
+            type: string
+        - name: owner
+          in: query
+          description: MRC040 Item Creator
+          required: true
+          schema:
+            type: string
+            format: Metacoin Address
+        - name: side
+          in: query
+          required: true
+          description: |
+            Target Token buy or sell
+
+            SELL : Target Token to Sell token
+
+            BUY : Sell token to Target token
+          schema:
+            type: string
+            enum:
+              - SELL
+              - BUY
+        - name: basetoken
+          in: query
+          required: true
+          description: Token ID, 0 means Metacoin
+          schema:
+            format: integer
+        - name: targettoken
+          in: query
+          required: true
+          description: Token ID
+          schema:
+            format: integer
+        - name: price
+          in: query
+          required: true
+          description: Unit Price, not total price.
+          schema:
+            format: decimal
+        - name: qtt
+          in: query
+          required: true
+          description: Quantity of SELL or BUY
+          schema:
+            format: decimal
+        - name: signature
+          in: query
+          required: true
+          schema:
+            type: string
+            format: base64
+          description: |
+            - ECDSA sign for data.
+            - ex) ecdsa_sign(privatekey of owner address, owner +'|'+ basetoken +'|'+ targettoken +'|'+ Price + '|' + QTT + '|' + tkey)
+      responses:
+        "200":
+          description: successful operation
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/MRC040RESPONSE"
+        "405":
+          description: Missing or invalid RSA key
+
+  /mrc040/cancel/{tkey}:
+    post:
+      tags:
+        - MRC040
+      summary: Delete(Cancel) TOKEN exchange job
+      description: |
+        - Cancel DEX item
+      parameters:
+        - name: tkey
+          in: path
+          description: Temporary key for Sign(return value of GET /getkey/mrc040)
+          required: true
+          schema:
+            type: string
+        - name: owner
+          in: query
+          description: MRC040 Item creator
+          required: true
+          schema:
+            type: string
+            format: Metacoin Address
+        - name: mrc040id
+          in: query
+          description: MRC040 Item Unique key
+          required: true
+          schema:
+            type: string
+            format: MRC040 ID
+        - name: signature
+          in: query
+          required: true
+          schema:
+            type: string
+            format: base64
+          description: |
+            - ECDSA sign for data.
+            - ex) ecdsa_sign(privatekey of owner address, owner +'|'+ MRC040 Item Unique Key + '|' + tkey)
+      responses:
+        "200":
+          description: successful operation
+          content:
+            "*/*":
+              schema:
+                type: string
+                format: Transaction ID
+                description: cancel exchange Transaction ID
+        "405":
+          description: Missing or invalid RSA key
+
+  /mrc040/exchange/{tkey}:
+    post:
+      tags:
+        - MRC040
+      summary: Token Exchange
+      description: |
+        - Exchange DEX Item
+      parameters:
+        - name: tkey
+          in: path
+          description: Temporary key for Sign(return value of GET /getkey/mrc040)
+          schema:
+            type: string
+          required: true
+        - name: requester
+          in: query
+          description: Exchange Requester Address
+          schema:
+            type: string
+            format: Metacoin Address
+          required: true
+        - name: mrc040id
+          in: query
+          description: MRC040 Item Unique key
+          schema:
+            format: string
+          required: true
+        - name: qtt
+          in: query
+          description: Quantity of SELL or BUY
+          schema:
+            format: decimal
+          required: true
+        - name: signature
+          in: query
+          required: true
+          schema:
+            type: string
+            format: base64
+          description: |
+            - ECDSA sign for data.
+            - ex) ecdsa_sign(privatekey of requester address, requester +'|'+ itemkey + '|' + qtt  + '|' + tkey)
+
+      responses:
+        "200":
+          description: successful operation
+          content:
+            "*/*":
+              schema:
+                type: string
+                format: Transaction ID
+                description: cancel exchange Transaction ID
+        "405":
+          description: Missing or invalid RSA key
+
+  /mrc410/{mrc410id}:
+    get:
+      tags:
+        - MRC410
+      summary: Coupon/Ticket data get
+      description: |
+        - Preset the data for the coupon to be issued.
+      parameters:
+        - name: mrc410id
+          in: path
+          description: Unique key value for coupon created via / mrc410/create
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: successful operation
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/MRC410"
+        "405":
+          description: Missing or invalid RSA key
+
+  /mrc410:
+    post:
+      tags:
+        - MRC410
+      summary: Coupon/Ticket Create
+      description: |
+        - Preset the data for the coupon to be issued.
+        - Common information of MRC411 created under MRC410 is saved.
+      parameters:
+        - name: creator
+          in: query
+          description: Coupon/Ticket Creater
+          schema:
+            type: string
+            format: Metacoin Address
+            minLength: 40
+            maxLength: 40
+          required: true
+        - name: name
+          in: query
+          description: Coupon/Ticket name
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 32
+        - name: validity_type
+          in: query
+          required: true
+          description: |
+            - Validity period setting method
+              - term : Valid from start date to end date.
+              - duration : Valid for a certain period from the time of issue
+          schema:
+            type: string
+            enum:
+              - term
+              - duration
+        - name: is_transfer
+          in: query
+          required: true
+          description: |
+            - Configure Transferable
+              - 0 : Not transferable
+              - 1 : Transferable
+          schema:
+            type: string
+            enum:
+              - "0"
+              - "1"
+        - name: start_date
+          in: query
+          description: |
+            - Start date when coupon can be used
+            - Ignored if `validity_type` is `duration`
+            - If the value of `validity_type` is `term`, it must be set.
+          schema:
+            type: string
+            format: UnixTimestamp (UTC)
+        - name: end_date
+          in: query
+          description: |
+            - End date when coupon can be used
+            - Ignored if `validity_type` is `duration`
+            - If the value of `validity_type` is `term`, it must be set.
+          schema:
+            type: string
+            format: UnixTimestamp (UTC)
+        - name: term
+          in: query
+          schema:
+            type: string
+            format: integer
+          description: |
+            - Date available from issue date
+            - Ignored if validity_type is term
+            - If the value of `validity_type` is `duration`, it must be set.
+        - name: code
+          in: query
+          description: Coupon/Ticket identified code
+          schema:
+            format: string
+            maxLength: 64
+        - name: data
+          in: query
+          description: Coupon/Ticket data
+          schema:
+            format: string
+            maxLength: 2048
+        - name: tkey
+          in: query
+          description: Temporary key for Sign(return value of GET /getkey/mrc410/`creator`)
+          schema:
+            type: string
+          required: true
+        - name: signature
+          in: query
+          required: true
+          schema:
+            type: string
+            format: base64
+          description: |
+            - ECDSA sign for data.
+            - ex) ecdsa_sign(privatekey of owner address, `owner` +'|'+ `name` + '|' + `totalsupply` + '|' + `validity_type` + '|' + `is_transfer` + '|' + `code` + '|' + `data` + '|' + `tkey`)
+      responses:
+        "200":
+          description: successful operation
+          content:
+            "*/*":
+              schema:
+                type: string
+                format: MRC410 Item unique key
+                description: MRC410 Unique key for publish, use, transfer, expire
+        "405":
+          description: Missing or invalid RSA key
+
+    put:
+      tags:
+        - MRC410
+      summary: Coupon/Ticket update
+      description: |
+        - The creater of the coupon/ticket issues it to reciever
+        - This step is mandatory for the user to use the coupon/ticket
+      parameters:
+        - name: mrc410id
+          in: query
+          description: MRC410 id
+          schema:
+            type: string
+            minLength: 40
+            maxLength: 40
+            example: MRC410_05be696ba7bbe63d9da03dd1d98060d9e
+          required: true
+        - name: name
+          in: query
+          description: Coupon/Ticket name
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 32
+        - name: validity_type
+          in: query
+          required: true
+          description: |
+            - Validity period setting method
+              - term : Valid from start date to end date.
+              - duration : Valid for a certain period from the time of issue
+          schema:
+            type: string
+            enum:
+              - term
+              - duration
+        - name: transfertable
+          in: query
+          required: true
+          description: |
+            - Configure Transferable
+              - 0 : Not transferable
+              - 1 : Transferable
+          schema:
+            type: string
+            enum:
+              - "0"
+              - "1"
+        - name: start_date
+          in: query
+          description: |
+            - Start date when coupon can be used
+            - Ignored if `validity_type` is `duration`
+            - If the value of `validity_type` is `term`, it must be set.
+          schema:
+            type: string
+            format: UnixTimestamp (UTC)
+        - name: end_date
+          in: query
+          description: |
+            - End date when coupon can be used
+            - Ignored if `validity_type` is `duration`
+            - If the value of `validity_type` is `term`, it must be set.
+          schema:
+            type: string
+            format: UnixTimestamp (UTC)
+        - name: term
+          in: query
+          schema:
+            type: string
+            format: integer
+          description: |
+            - Date available from issue date
+            - Ignored if validity_type is term
+            - If the value of `validity_type` is `duration`, it must be set.
+        - name: code
+          in: query
+          description: Coupon/Ticket identified code
+          schema:
+            format: string
+            minLength: 0
+            maxLength: 64
+        - name: data
+          in: query
+          description: Coupon/Ticket data
+          schema:
+            format: string
+            minLength: 0
+            maxLength: 2048
+        - name: tkey
+          in: query
+          description: Temporary key for Sign(return value of GET /getkey/transfer/`creator`)
+          schema:
+            type: string
+          required: true
+        - name: signature
+          in: query
+          required: true
+          schema:
+            type: string
+            format: base64
+          description: |
+            - ECDSA sign for data.
+            - ex) ecdsa_sign(privatekey of owner address, `owner` +'|'+ `name` + '|' + `totalsupply` + '|' + `validity_type` + '|' + `is_transfer` + '|' + `code` + '|' + `data` + '|' + `tkey`)
+      responses:
+        "200":
+          description: successful operation
+          content:
+            "*/*":
+              schema:
+                type: string
+                format: MRC410 Item unique key
+                description: MRC410 Unique key for publish, use, transfer, expire
+        "405":
+          description: Missing or invalid RSA key
+
+  /mrc411:
+    post:
+      tags:
+        - MRC411
+      summary: Coupon/Ticket publish
+      description: |
+        - The creater of the coupon/ticket issues it to reciever
+        - This step is mandatory for the user to use the coupon/ticket
+        - `**MRC410 does not change the owner's NONCE value.**`
+      parameters:
+        - name: mrc410id
+          in: query
+          required: true
+          description: MRC410 ID
+          schema:
+            type: string
+        - name: mrc411id
+          in: query
+          required: true
+          schema:
+            type: array
+            format: json
+            minItems: 1
+            maxItems: 1000
+            items:
+              type: string
+              minLength: 40
+              maxLength: 40
+          description: |
+            - MRC411 Item ID list
+            - MRC411 Item id is unique value within MRC410
+          example: '["0000000000000000000000000000000000000001","0000000000000000000000000000000000000002"]'
+        - name: tkey
+          in: path
+          schema:
+            type: string
+          required: true
+          description: Temporary key for Sign(return value of GET /getkey/transfer/{MRC410 Creator})
+        - name: signature
+          in: query
+          required: true
+          schema:
+            type: string
+            format: base64
+          description: |
+            - ECDSA sign for data.
+            - ex) ecdsa_sign(privatekey of owner address, `mrc410id` +'|'+ `mrc411id` + '|' + `tkey`)
+      responses:
+        "200":
+          description: successful operation
+          content:
+            "*/*":
+              schema:
+                type: string
+                format: MRC411 Unique Key
+                description: |
+                  - mrc411 unique key is mrc410 + "_" + md5(`publish_code`)
+        "405":
+          description: Missing or invalid RSA key
+
+  /mrc411/{mrc411id}:
+    get:
+      tags:
+        - MRC411
+      summary: Coupon/Ticket get
+      description: |
+        - Preset the data for the coupon to be issued.
+      parameters:
+        - name: mrc411id
+          in: path
+          description: Unique key value for coupon publish via put /mrc410/{tkey}
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: successful operation
+          content:
+            "*/*":
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/MRC410"
+                  - $ref: "#/components/schemas/MRC411"
+                  - type: object
+        "404":
+          description: Missing or Invalid MRC411 ITEM
+
+    put:
+      tags:
+        - MRC411
+      summary: Changed Coupon/Ticket(MRC411)'s owner change
+      description: |
+        - Set the owner of the MRC 411 token.
+        - An error occurs if the user of the MRC 411 token already exists.
+        - Only the owner of the MRC410 token to which the MRC411 token belongs can be called.
+        - `**MRC410 does not change the owner's NONCE value.**`
+      parameters:
+        - name: tkey
+          in: path
+          schema:
+            type: string
+          description: Temporary key for Sign(return value of GET /getkey/mrc410/{MRC410 Creator})
+          required: true
+        - name: mrc411id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: MRC411 Unique Key
+        - name: signature
+          in: query
+          required: true
+          schema:
+            type: string
+            format: base64
+          description: |
+            - ECDSA sign for data.
+            - ex) ecdsa_sign(privatekey of mrc411 creator address, `MRC411 Creator` + '|' + `mrc411id` + '|' + `tkey`)
+      responses:
+        "200":
+          description: successful operation
+          content:
+            "*/*":
+              schema:
+                type: string
+                format: Transaction ID
+                description: cancel exchange Transaction ID
+        "405":
+          description: Missing or invalid RSA key
+
+    delete:
+      tags:
+        - MRC411
+      summary: Changed Coupon/Ticket(MRC411)'s status to used
+      description: |
+        - Changed mrc411 item's status to used
+        - After you perform this command, you cannot change the state of that item.
+        - Only the mrc410 owner can call it.
+        - `**MRC410 does not change the owner's NONCE value.**`
+      parameters:
+        - name: tkey
+          in: path
+          schema:
+            type: string
+          description: Temporary key for Sign(return value of GET /getkey/mrc410/{MRC410 Creator})
+          required: true
+        - name: mrc411id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: MRC411 Unique Key
+        - name: signature
+          in: query
+          required: true
+          schema:
+            type: string
+            format: base64
+          description: |
+            - ECDSA sign for data.
+            - ex) ecdsa_sign(privatekey of mrc411 creator address, `MRC411 Creator` + '|' + `mrc411id` + '|' + `tkey`)
+      responses:
+        "200":
+          description: successful operation
+          content:
+            "*/*":
+              schema:
+                type: string
+                format: Transaction ID
+                description: cancel exchange Transaction ID
+        "405":
+          description: Missing or invalid RSA key
+
+    post:
+      tags:
+        - MRC411
+      summary: Coupon/Ticket transfer
+      description: |
+        - Call by mrc411 owner
+        - Send the MRC411 token to another user.
+        - If the value of the transfertable of the MRC410 token to which the MRC411 token belongs is not 1, an error occurs.
+      parameters:
+        - name: mrc411id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: MRC411 id
+            minLength: 81
+            maxLength: 81
+        - name: from
+          in: query
+          description: Coupon/Ticket sender
+          schema:
+            type: string
+            format: Metacoin Address
+          required: true
+        - name: to
+          in: query
+          description: Coupon/Ticket receiver
+          schema:
+            type: string
+            format: Metacoin Address
+          required: true
+        - name: tkey
+          in: query
+          schema:
+            type: string
+          description: Temporary key for Sign(return value of GET /getkey/mrc410/`from`)
+          required: true
+        - name: signature
+          in: query
+          required: true
+          schema:
+            type: string
+            format: base64
+          description: |
+            - ECDSA sign for data.
+            - ex) ecdsa_sign(privatekey of from address, `from` + '|' + `to` + '|' + `mrc411id` + '|' + `tkey`)
+      responses:
+        "200":
+          description: successful operation
+          content:
+            "*/*":
+              schema:
+                type: string
+                format: Transaction ID
+                description: cancel exchange Transaction ID
+        "405":
+          description: Missing or invalid RSA key
+
+  /mrc030:
+    post:
+      tags:
+        - MRC030
+      summary: Pay to start the game
+      description: |
+        - Pay to start the game.
+        - move token from player list's to "to"
+        - This can be used to receive Tokens from multiple users
+      parameters:
+        - name: owner
+          in: query
+          schema:
+            type: string
+            format: Metacoin Address
+          description: Vote owner
+          required: true
+        - name: start_date
+          in: query
+          schema:
+            type: integer
+          description: Token ID to player's payment
+          required: true
+        - name: end_date
+          in: query
+          schema:
+            type: integer
+          description: Token ID to player's payment
+          required: true
+        - name: title
+          in: query
+          schema:
+            type: integer
+          description: Token ID to player's payment
+          required: true
+        - name: image_url
+          in: query
+          schema:
+            type: integer
+          description: Token ID to player's payment
+          required: true
+      responses:
+        "200":
+          description: successful operation
+          content:
+            "*/*":
+              schema:
+                type: object
+                properties:
+                  transaction_id:
+                    type: string
+                    description: Transaction ID
+        "400":
+          description: insufficient balance
+        "404":
+          description: Address not found
+
+  /mrc035:
+    post:
+      tags:
+        - MRC035
+      summary: Pay to start the game
+      description: |
+        - Pay to start the game.
+        - move token from player list's to "to"
+        - This can be used to receive Tokens from multiple users
+      parameters:
+        - name: owner
+          in: query
+          schema:
+            type: string
+            format: Metacoin Address
+          description: Vote owner
+          required: true
+        - name: start_date
+          in: query
+          schema:
+            type: integer
+          description: Token ID to player's payment
+          required: true
+        - name: end_date
+          in: query
+          schema:
+            type: integer
+          description: Token ID to player's payment
+          required: true
+        - name: title
+          in: query
+          schema:
+            type: integer
+          description: Token ID to player's payment
+          required: true
+        - name: description
+          in: query
+          schema:
+            type: integer
+          description: Token ID to player's payment
+          required: true
+        - name: data
+          in: query
+          schema:
+            type: integer
+          description: Token ID to player's payment
+          required: true
+        - name: reward
+          in: query
+          schema:
+            type: integer
+          description: Amount of compensation per person
+          required: true
+        - name: reward_token
+          in: query
+          schema:
+            type: integer
+          description: Reward token
+          required: true
+        - name: survay_max
+          in: query
+          schema:
+            type: integer
+          description: Maximum number of participants (0-no limit-lottery reward)
+          required: true
+        - name: reward_count
+          in: query
+          schema:
+            type: integer
+          description: Number of rewards
+          required: true
+        - name: item
+          in: query
+          schema:
+            type: integer
+          description: Survey history
+          required: true
+        - name: result_open
+          in: query
+          schema:
+            type: integer
+          description: Form 0-Private, 10-Public after expiration, 20-Always published
+          required: true
+        - name: detail_open
+          in: query
+          schema:
+            type: integer
+          description: Disclosure of details by participant Format 0-Private, 10-Public after expiration, 20-Always published
+          required: true
+        - name: survay_open
+          in: query
+          schema:
+            type: integer
+          description: Participant approval format 0-No restrictions, 10-Signature must be made with the privatekey provided when creating a survey
+          required: true
+        - name: signature
+          in: query
+          required: true
+          schema:
+            type: string
+            format: base64
+          description: |
+            - ECDSA sign for data.
+            - ex) ecdsa_sign(privatekey of owner address, owner +'|'+ reward +'|'+ reward_token +'|'+survay_max+'|'+reward_count +'|'+Temporarykey)
+      responses:
+        "200":
+          description: successful operation
+          content:
+            "*/*":
+              schema:
+                type: object
+                properties:
+                  transaction_id:
+                    type: string
+                    description: Transaction ID
+        "400":
+          description: insufficient balance
+        "404":
+          description: Address not found
+  /mrc035/{id}:
+    get:
+      tags:
+        - MRC035
+      summary: GET MRC035
+      description: |
+        - Pay to start the game.
+        - move token from player list's to "to"
+        - This can be used to receive Tokens from multiple users
+      responses:
+        "200":
+          description: successful operation
+          content:
+            "*/*":
+              schema:
+                type: object
+                properties:
+                  transaction_id:
+                    type: string
+                    description: Transaction ID
+        "400":
+          description: insufficient balance
+        "404":
+          description: Address not found
+  /mrc036:
+    post:
+      tags:
+        - MRC035
+      summary: GET MRC035
+      description: |
+        - Pay to start the game.
+        - move token from player list's to "to"
+        - This can be used to receive Tokens from multiple users
+      responses:
+        "200":
+          description: successful operation
+          content:
+            "*/*":
+              schema:
+                type: object
+                properties:
+                  transaction_id:
+                    type: string
+                    description: Transaction ID
+        "400":
+          description: insufficient balance
+        "404":
+          description: Address not found
+  /mrc036/{id}:
+    get:
+      tags:
+        - MRC035
+      summary: GET MRC035
+      description: |
+        - Pay to start the game.
+        - move token from player list's to "to"
+        - This can be used to receive Tokens from multiple users
+      responses:
+        "200":
+          description: successful operation
+          content:
+            "*/*":
+              schema:
+                type: object
+                properties:
+                  transaction_id:
+                    type: string
+                    description: Transaction ID
+        "400":
+          description: insufficient balance
+        "404":
+          description: Address not found
+
+  /mrc100/payment:
+    post:
+      tags:
+        - MRC100
+      summary: Pay to start the game
+      description: |
+        - Pay to start the game.
+        - move token from player list's to "to"
+        - This can be used to receive Tokens from multiple users
+      parameters:
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: Metacoin Address
+          description: Address to receive player's payment
+          required: true
+        - name: token
+          in: query
+          schema:
+            type: integer
+          description: Token ID to player's payment
+          required: true
+        - name: tag
+          in: query
+          schema:
+            type: string
+            minLength: 0
+            maxLength: 64
+          description: |
+            - Address tag to receive player's payment
+            - Up to 64 characters are stored, and characters after 64 characters are not stored.
+          required: true
+        - name: userlist
+          in: query
+          required: true
+          description: |
+            - List of addresses to pay token for "to"
+          schema:
+            type: array
+            format: json
+            minItems: 1
+            maxItems: 32
+            items:
+              type: object
+              properties:
+                address:
+                  example: "MT0000..."
+                  type: string
+                  format: Metacoin Address
+                  description: Metacoin wallet ID
+                amount:
+                  example: "100"
+                  type: string
+                  format: integer
+                  description: |
+                    - Payment amount
+                    - If no reward amount but need memo set "0"
+                tkey:
+                  example: "TKEY of MT0000..."
+                  type: string
+                  description: Temporary key for Sign(return value of Get /getkey/mrc100/`address`)
+                signature:
+                  example: "sign of token | to | amount | tkey"
+                  type: string
+                  format: base64
+                  description: |
+                    - ECDSA sign for data.
+                    - ex) ecdsa_sign(privatekey of player, address + '|' + to + '|' + token +'|'+ amount +'|'+tkey)
+        - name: gameid
+          in: query
+          schema:
+            type: string
+            minLength: 0
+            maxLength: 64
+          description: |
+            - Game stage id or empty string
+            - Up to 64 characters are stored, and characters after 64 characters are not stored.
+          required: true
+        - name: gamememo
+          in: query
+          schema:
+            type: string
+            minLength: 0
+            maxLength: 2048
+          description: |
+            - Game stage memo or empty string
+            - Up to 2048 characters are stored, and characters after 2048 characters are not stored.
+          required: true
+
+      responses:
+        "200":
+          description: successful operation
+          content:
+            "*/*":
+              schema:
+                type: object
+                properties:
+                  transaction_id:
+                    type: string
+                    description: Transaction ID
+        "400":
+          description: insufficient balance
+        "404":
+          description: Address not found
+
+  /mrc100/reward:
+    post:
+      tags:
+        - MRC100
+      summary: Pay the reward when the game ends
+      description: |
+        - Pay the reward when the game ends.
+        - move token from "from" to player list's
+        - Can be used to send tokens to multiple users.
+
+      parameters:
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: Metacoin Address
+          description: Address to send reward
+          required: true
+        - name: tkey
+          in: query
+          description: Temporary key for Sign(return value of GET /getkey/mrc100/`from`)
+          required: true
+          schema:
+            type: string
+        - name: token
+          in: query
+          schema:
+            type: integer
+          description: Token ID to reawrd
+          required: true
+        - name: userlist
+          in: query
+          required: true
+          description: |
+            - List of users to receive tokens from
+
+            - Encoding json string
+          schema:
+            type: array
+            format: json
+            minItems: 1
+            maxItems: 32
+            items:
+              type: object
+              properties:
+                address:
+                  example: "MT0000..."
+                  type: string
+                  format: Metacoin Address
+                  description: Metacoin wallet address
+                amount:
+                  example: "100"
+                  type: string
+                  format: integer
+                  minimum: 0
+                  description: |
+                    - Reward amount
+                    - If no reward amount but need memo set "0"
+                tag:
+                  example: "tag"
+                  type: string
+                  minLength: 0
+                  maxLength: 64
+                  description: Tag of Metacoin wallet address or empty string
+                memo:
+                  type: string
+                  example: "winner reward"
+                  minLength: 0
+                  maxLength: 2048
+                  description: Payment memo
+        - name: gameid
+          in: query
+          schema:
+            type: string
+            minLength: 0
+            maxLength: 64
+          description: Game stage id
+          required: true
+        - name: gamememo
+          in: query
+          schema:
+            type: string
+            minLength: 0
+            maxLength: 2048
+          description: Game stage memo
+          required: true
+        - name: signature
+          in: query
+          required: true
+          schema:
+            type: string
+            format: base64
+          description: |
+            - ECDSA sign for data.
+            - ex) ecdsa_sign(privatekey of from, token +'|'+ playerlist[0]['address'] + '|' + playerlist[0]['amount'] + '|' + playerlist[0]['tag'] + '|' + playerlist[1]['address'] + '|' + .... + '|' + tkey)
+
+      responses:
+        "200":
+          description: successful operation
+          content:
+            "*/*":
+              schema:
+                type: object
+                properties:
+                  transaction_id:
+                    type: string
+                    description: Transaction ID
+        "400":
+          description: insufficient balance
+        "404":
+          description: Address not found
+
+  /mrc100/log/{tkey}:
+    post:
+      tags:
+        - MRC100
+      summary: Log for MRC100, MRC101
+      description: |
+        - Log for MRC100, MRC101
+        - It is used for the purpose of leaving important records in the game.
+        - Token id's type is ***MUST*** be MRC100 or MRC101
+
+      parameters:
+        - name: token
+          in: query
+          schema:
+            type: string
+          description: MRC100 or MRC101 token id
+          required: true
+        - name: logger
+          in: query
+          required: true
+          example: MTATLnT6SGKE8RU0CBPoDRfUXL5lr4SLece1a6ee
+          description: Address of Log writter
+          schema:
+            type: string
+            format: Metacoin Address
+            maxLength: 40
+            minLength: 40
+        - name: log
+          in: query
+          schema:
+            type: string
+            format: utf-8
+            minLength: 1
+            maxLength: 2048
+          description: |
+            - game log
+
+            - Up to 2048 characters are stored, and characters after 2048 characters are not stored.
+          required: true
+        - name: signature
+          in: query
+          required: true
+          schema:
+            type: string
+            format: base64
+          description: |
+            - ECDSA sign for data.
+            - ex) ecdsa_sign(privatekey of logger, token +'|'+ logger + '|' + log + '|' + tkey)
+        - name: tkey
+          in: path
+          description: Temporary key for Sign(return value of GET /getkey/mrc100/{logger})
+          required: true
+          schema:
+            type: string
+
+      responses:
+        "200":
+          description: successful operation
+          content:
+            "*/*":
+              schema:
+                type: object
+                properties:
+                  transaction_id:
+                    type: string
+                    description: Transaction ID
+
+  /mrc100/logger/{token}:
+    get:
+      tags:
+        - MRC100
+      summary: Logger list for MRC100, MRC101 token
+      description: |
+        - Return list of addresses that can log in the token's name
+
+      parameters:
+        - name: token
+          in: path
+          schema:
+            type: string
+          description: MRC100 or MRC101 token id
+          required: true
+
+      responses:
+        "200":
+          description: successful operation
+          content:
+            "*/*":
+              schema:
+                type: object
+                properties:
+                  logger:
+                    type: string
+                    description: Transaction ID
+                example:
+                  {
+                    "MTLhcZ9BZnnm4CgUCOx40xThbPSnBonG3d699275": 1569501014,
+                    "MTcLse7l6W3X8MEXoKrmeaM5hPTuTGXG8cf9fdba": 1569501183,
+                    "MTA6SGKE8RU0TTCBPoDRfULnXL5lr4SLece1a6ee": 1567938310,
+                  }
+
+  /mrc100/logger/{tkey}:
+    post:
+      tags:
+        - MRC100
+      summary: Grant address to log in token name.
+      description: |
+        - Grant address to log in token name.
+      parameters:
+        - name: token
+          in: query
+          schema:
+            type: string
+          description: MRC100 or MRC101 token id
+          required: true
+        - name: address
+          in: query
+          required: true
+          example: MTATLnT6SGKE8RU0CBPoDRfUXL5lr4SLece1a6ee
+          description: Address to authorize logging in token name
+          schema:
+            type: string
+            format: Metacoin Address
+            maxLength: 40
+            minLength: 40
+        - name: signature
+          in: query
+          required: true
+          schema:
+            type: string
+            format: base64
+          description: |
+            - ECDSA sign for data.
+            - ex) ecdsa_sign(privatekey of token owner, token +'|'+ address + '|' + tkey)
+        - name: tkey
+          in: path
+          description: Temporary key for Sign(return value of GET /getkey/mrc100/{tokenowner})
+          required: true
+          schema:
+            type: string
+
+      responses:
+        "200":
+          description: successful operation
+          content:
+            "*/*":
+              schema:
+                type: object
+                properties:
+                  transaction_id:
+                    type: string
+                    description: Transaction ID
+    delete:
+      tags:
+        - MRC100
+      summary: Retrieved the permission to log in token name
+      description: |
+        - Retrieved the permission to log in token name
+      parameters:
+        - name: token
+          in: query
+          schema:
+            type: string
+          description: MRC100 or MRC101 token id
+          required: true
+        - name: address
+          in: query
+          example: MTATLnT6SGKE8RU0CBPoDRfUXL5lr4SLece1a6ee
+          description: Address to reclaim
+          required: true
+          schema:
+            type: string
+            format: Metacoin Address
+            maxLength: 40
+            minLength: 40
+        - name: signature
+          in: query
+          required: true
+          schema:
+            type: string
+            format: base64
+          description: |
+            - ECDSA sign for data.
+            - ex) ecdsa_sign(privatekey of token owner, token +'|'+ address + '|' + tkey)
+        - name: tkey
+          in: path
+          description: Temporary key for Sign(return value of GET /getkey/mrc100/{tokenowner})
+          required: true
+          schema:
+            type: string
+
+      responses:
+        "200":
+          description: successful operation
+          content:
+            "*/*":
+              schema:
+                type: object
+                properties:
+                  transaction_id:
+                    type: string
+                    description: Transaction ID
+  /mrc200/**HIDDEN**:
+    get:
+      tags:
+        - MRC200
+      summary: Token for Entertainment
+      description: |
+        *Provide only MRC-200 token owner.*
+      responses:
+        "200":
+          description: successful operation
+
+  /mrc300/**HIDDEN**:
+    get:
+      tags:
+        - MRC300
+      summary: Token for Vihicle
+      description: |
+        *Provide only MRC-300 token owner.*
+      responses:
+        "200":
+          description: successful operation
+
+  /mrc800/balance/{address}:
+    get:
+      tags:
+        - MRC800
+      summary: Get balance of point
+      description: |
+        - Returns the points held by the target
+      parameters:
+        - $ref: "#/components/parameters/address"
+      responses:
+        "200":
+          description: successful operation
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/MRC800"
+
+  /mrc800/{mrc800_id}:
+    get:
+      tags:
+        - MRC800
+      summary: Get point info
+      description: |
+        - Preset the data for the point to be issued.
+      parameters:
+        - name: mrc800_id
+          in: path
+          description: Unique key value for point created via / mrc800/create
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: successful operation
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/MRC800"
+
+  /mrc800:
+    post:
+      tags:
+        - MRC800
+      summary: Point Create
+      description: |
+        - Preset the data for the coupon to be issued.
+      parameters:
+        - name: creator
+          in: query
+          description: Point Creater(owner)
+          schema:
+            type: string
+            format: Metacoin Address
+          required: true
+        - name: name
+          in: query
+          description: Point name
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 32
+        - name: is_transfer
+          in: query
+          required: true
+          description: |
+            - Configure Transferable
+              - 0 : Not transferable
+              - 1 : Transferable
+          schema:
+            type: string
+            enum:
+              - "0"
+              - "1"
+        - name: data
+          in: query
+          description: Point data
+          schema:
+            format: string
+            minLength: 0
+            maxLength: 2048
+        - name: tkey
+          in: query
+          description: Temporary key for Sign(return value of GET /getkey/mrc800/`creator`)
+          schema:
+            type: string
+          required: true
+        - name: signature
+          in: query
+          required: true
+          schema:
+            type: string
+            format: base64
+          description: |
+            - ECDSA sign for data.
+            - ex) ecdsa_sign(privatekey of owner address, `creator` +'|'+ `name` + '|' + `is_transfer` + `tkey`)
+      responses:
+        "200":
+          description: successful operation
+          content:
+            "*/*":
+              schema:
+                type: string
+                format: mrc800 Item unique key
+                description: mrc800 Unique key for publish, use, transfer, expire
+        "405":
+          description: Missing or invalid RSA key
+
+    put:
+      tags:
+        - MRC800
+      summary: Give the target a POINT.
+      description: |
+        - Call by mrc800 owner
+        - point increased to target
+      parameters:
+        - $ref: "#/components/parameters/mrc800_id"
+
+        - name: data
+          in: query
+          required: true
+          schema:
+            type: array
+            format: json
+            minItems: 1
+            maxItems: 100
+            items:
+              type: object
+              properties:
+                to:
+                  description: Point receiver
+                  type: string
+                  format: Metacoin Address
+                amount:
+                  description: Points to Target
+                  type: string
+                  format: integer
+                memo:
+                  type: string
+                  minLength: 0
+                  maxLength: 512
+                  description: |
+                    - It does not play any role. However, it is recorded in the Block and can be referenced to this value.
+                    - Up to 512 characters are stored, and characters after 512 characters are not stored.
+        - name: tkey
+          in: query
+          schema:
+            type: string
+          description: Temporary key for Sign(return value of GET /getkey/mrc800/`from`)
+          required: true
+        - name: signature
+          in: query
+          required: true
+          schema:
+            type: string
+            format: base64
+          description: |
+            - ECDSA sign for data.
+            - ex) ecdsa_sign(privatekey of from address, `mrc800_id` + '|' + `data` + '|' + `tkey`)
+      responses:
+        "200":
+          description: successful operation
+          content:
+            "*/*":
+              schema:
+                type: string
+                format: Transaction ID
+                description: cancel exchange Transaction ID
+        "405":
+          description: Missing or invalid RSA key
+
+    delete:
+      tags:
+        - MRC800
+      summary: Deduct the points of the target
+      description: |
+        - Call by mrc800 owner
+        - point descriments to target
+      parameters:
+        - name: tkey
+          in: path
+          schema:
+            type: string
+          description: Temporary key for Sign(return value of GET /getkey/mrc800/`from`)
+          required: true
+        - $ref: "#/components/parameters/mrc800_id"
+        - name: from
+          in: query
+          description: Point sender
+          schema:
+            type: string
+            format: Metacoin Address
+          required: true
+        - name: to
+          in: query
+          description: Point receiver(MRC800 owner)
+          schema:
+            type: string
+            format: Metacoin Address
+          required: true
+        - name: amount
+          in: query
+          description: Points to Target
+          schema:
+            type: integer
+          required: true
+        - name: memo
+          in: query
+          schema:
+            type: string
+            minLength: 0
+            maxLength: 2048
+          description: |
+            - It does not play any role. However, it is recorded in the Block and can be referenced to this value.
+            - Up to 2048 characters are stored, and characters after 2048 characters are not stored.
+        - name: signature
+          in: query
+          required: true
+          schema:
+            type: string
+            format: base64
+          description: |
+            - ECDSA sign for data.
+            - ex) ecdsa_sign(privatekey of to address, `mrc800_id` + '|' + `from` + '|' + `to` + '|' + `amount` + '|' + `tkey`)
+      responses:
+        "200":
+          description: successful operation
+          content:
+            "*/*":
+              schema:
+                type: string
+                format: Transaction ID
+                description: cancel exchange Transaction ID
+        "405":
+          description: Missing or invalid RSA key
+
+  /mrc800/transfer:
+    post:
+      tags:
+        - MRC800
+      summary: Send point
+      description: |
+        - Transfer the point of from to the target
+      parameters:
+        - name: tkey
+          in: path
+          schema:
+            type: string
+          description: Temporary key for Sign(return value of GET /getkey/mrc800/`from`)
+          required: true
+        - $ref: "#/components/parameters/mrc800_id"
+        - name: from
+          in: query
+          description: Point sender
+          schema:
+            type: string
+            format: Metacoin Address
+          required: true
+        - name: to
+          in: query
+          description: Point receiver
+          schema:
+            type: string
+            format: Metacoin Address
+          required: true
+        - name: memo
+          in: query
+          schema:
+            type: string
+            minLength: 0
+            maxLength: 2048
+          description: |
+            - It does not play any role. However, it is recorded in the Block and can be referenced to this value.
+            - Up to 2048 characters are stored, and characters after 2048 characters are not stored.
+        - name: signature
+          in: query
+          required: true
+          schema:
+            type: string
+            format: base64
+          description: |
+            - ECDSA sign for data.
+            - ex) ecdsa_sign(privatekey of from address, `from` + '|' + `to` + '|' + `mrc800_id` + '|' + `tkey`)
+      responses:
+        "200":
+          description: successful operation
+          content:
+            "*/*":
+              schema:
+                type: string
+                format: Transaction ID
+                description: cancel exchange Transaction ID
+        "400":
+          description: Point not transferable
+        "405":
+          description: Missing or invalid RSA key
 components:
   parameters:
     tokenid:
@@ -3835,7 +5634,7 @@ components:
     tkey:
       name: tkey
       in: query
-      description: Temporary key for Sign(return value of GET /nonce/{address})
+      description: Temporary key for Sign(return value of GET /getkey/mrc100/{tokenowner})
       required: true
       schema:
         type: string
@@ -3865,37 +5664,7 @@ components:
       description: |
           - When transfer is allowed
           - Transfer is possible after the designated time
-  responses:
-    txresponse:
-      description: successful operation
-      content: 
-        '*/*':
-          schema:
-            $ref: '#/components/schemas/txresponse'
-
-    nodeerror:
-      description: metacoin node response error
-      content:
-        "*/*":
-          schema:
-            type: string
-            description: error message
-    paramerror:
-      description: operation error
-      content:
-        "*/*":
-          schema:
-            type: string
-            description: error message
-
   schemas:
-    txresponse:
-      type: object
-      properties:
-        txid:
-          type: string
-          description: Transaction ID
-
     address:
       type: object
       properties:
@@ -3995,6 +5764,12 @@ components:
             - exchangePair
             - ownerBurning
             - ownerIncrease
+            - stodexExchange
+            - stodexExchangePending
+            - stodexExchangeRequest
+            - stodexRegister
+            - stodexRequest
+            - stodexUnRegister
             - tokenAddTarget
             - tokenBurning
             - tokenIncrease
@@ -4085,6 +5860,10 @@ components:
                   7. tag
                   8. memo
 
+            13. stodexExchange, stodexExchangePending, stodexExchangeRequest, stodexRegister, stodexRequest, stodexUnRegister
+              - for MRC040
+              - sorry, not yet fixed
+
         validationCode:
           type: string
           format: int32
@@ -4116,154 +5895,284 @@ components:
               type: integer
               format: UnixTimestamp (UTC)
               description: address create timestamp
-    MRC010DEX:
+
+    MRC040RESPONSE:
       type: object
       properties:
-        dexid:
+        mrc040id:
+          description: MRC040 Unique KEY
           type: string
-          format: MRC010 DEX ID
-        mrc010:
+        txid:
+          type: string
+          format: Transaction ID
+          description: cancel exchange Transaction ID
+
+    MRC410:
+      type: object
+      required:
+        - creator
+        - name
+        - totalsupply
+        - validity_type
+        - is_transfer
+      properties:
+        creator:
+          description: Coupon/Ticket Creater
+          type: string
+          format: Metacoin Address
+        name:
+          description: Coupon/Ticket name
+          type: string
+          minLength: 1
+          maxLength: 32
+        validity_type:
+          description: |
+            - term : Valid from start date to end date.
+            - duration : Valid for a certain period from the time of issue
+          type: string
+          enum:
+            - term
+            - duration
+        is_transfer:
+          description: |
+            Configure Transferable
+            - "0": Not transferable
+            - "1": Transferable
+          type: string
+          format: integer
+          enum:
+            - "0"
+            - "1"
+        start_date:
+          description: |
+            - Start date when coupon can be used
+            - Ignored if `validity_type` is `duration`
+            - If the value of `validity_type` is `term`, it must be set.
+          type: string
+          format: UnixTimestamp (UTC)
+        end_date:
+          description: |
+            - End date when coupon can be used
+            - Ignored if `validity_type` is `duration`
+            - If the value of `validity_type` is `term`, it must be set.
+          type: string
+          format: UnixTimestamp (UTC)
+        term:
           type: string
           format: integer
           description: |
-            - sell or buy token id
-        seller:
+            - Date available from issue date
+            - Ignored if validity_type is term
+            - If the value of `validity_type` is `duration`, it must be set.
+        code:
+          description: Coupon/Ticket identified code
+          type: string
+          minLength: 0
+          maxLength: 64
+        data:
+          description: Coupon/Ticket data
+          type: string
+          minLength: 0
+          maxLength: 2048
+
+    MRC411:
+      type: object
+      required:
+        - creator
+        - owner
+        - publish_date
+        - issue_date
+        - status
+      properties:
+        mrc410id:
+          description: MRC410 Item unique key
+          type: string
+          format: MRC410 Item unique key
+        owner:
+          description: Coupon/Ticket owner
           type: string
           format: Metacoin Address
+        publish_date:
+          description: Coupon/Ticket publish date
+          type: string
+          format: UnixTimestamp (UTC)
+        issue_date:
           description: |
-            - If the value of `job_type` is `mrc010_sell` or `mrc010_buy`, it means the seller's metacoin address.
-            - If the value of `job_type` is not `mrc010_sell` or `mrc010_buy`, it is the metacoin address that accepted the purchase request.
-        buyer:
+            - Coupon/Ticket used, unpublished date
+            - If the value of status is `0` , must be ignore this value.
+          type: string
+          format: UnixTimestamp (UTC)
+        status:
+          description: |
+            - Coupon/Ticket status
+              - 0: not used
+              - 10: used
+              - 50: expired
+              - 80: unpublished
+          type: string
+          enum:
+            - "0"
+            - "10"
+            - "50"
+            - "80"
+    Reserve:
+      type: object
+      properties:
+        unlockdate:
+          type: integer
+          format: UnixTimestamp (UTC)
+          description: |
+            - When transfer is allowed
+            - Transfer is possible after the designated time
+        address:
           type: string
           format: Metacoin Address
-          description: |
-            - If the value of `job_type` is `mrc010_reqsell` or `mrc010_acceptreqsell`, it means the sales requester's metacoin address.
-            - If the value of `job_type` is not `mrc010_reqsell` or `mrc010_acceptreqsell`, it is the Metacoin address that accepted the sale request.
+          description: Address to receive token
+        value:
+          type: string
+          format: integer
+          description: Quantity to receive when creating token
+    Tier:
+      type: object
+      properties:
+        startdate:
+          type: integer
+          format: UnixTimestamp (UTC)
+        enddate:
+          type: integer
+          format: UnixTimestamp (UTC)
+        supply:
+          type: string
+        rate:
+          type: integer
+          description: Quantity of tokens available for 1 Metacoin
+        name:
+          type: string
+        investormin:
+          type: string
+          format: string
+          description: investor minimum capacity
+        remainamount:
+          type: string
+          format: string
+
+    MRC100_result:
+      type: object
+      properties:
+        timestamp:
+          type: integer
+          format: UnixTimestamp (UTC)
+        token:
+          type: integer
+          description: MRC-101 Token ID
+        userlist:
+          type: array
+          items:
+            type: object
+            properties:
+              "0":
+                type: string
+                description: Metacoin wallet ID
+              "1":
+                type: integer
+                description: user reward amount
+              "2":
+                type: string
+                description: game result
+        gameid:
+          type: string
+          description: Game stage id
+        gamememo:
+          type: string
+          description: Game stage memo
+
+    MRC100_item_create:
+      type: object
+      properties:
+        timestamp:
+          type: integer
+          format: UnixTimestamp (UTC)
+        token:
+          type: integer
+          description: MRC-101 Token ID
+        itemid:
+          type: string
+          description: item id
+        itemdata:
+          type: string
+          description: item data
+
+    MRC100_item_update:
+      type: object
+      properties:
+        timestamp:
+          type: integer
+          format: UnixTimestamp (UTC)
+        token:
+          type: integer
+          description: MRC-101 Token ID
+        itemid:
+          type: string
+          description: item id
+        itemdata:
+          type: string
+          description: item data
+
+    MRC100_item_trade:
+      type: object
+      properties:
+        timestamp:
+          type: integer
+          format: UnixTimestamp (UTC)
+        token:
+          type: integer
+          description: MRC-101 Token ID
+        itemid:
+          type: string
+          description: item id
+        old_owner:
+          type: string
+          description: item data
+        new_owner:
+          type: string
+          description: item data
         amount:
           type: string
-          format: integer
-          description: |
-            - Quantity sold or requested to be sold
-        remain_amount:
+          description: item data
+        fee:
           type: string
-          format: integer
-          description: |
-            - Remaining quantity sold or requested to be sold
-        min_trade_unit:
-          type: string
-          format: integer
-          description: |
-            - Minimum Trade Quantity
-            - Quantity at the time of purchase must be a multiple of this value.
-        platform_name:
-          type: string
-          format: integer
-          description: The name of the platform that supports this DEX transaction
-          example: Mefi
-        platform_url:
-          type: string
-          format: url
-          description: The URL of the platform that supports this DEX transaction
-          example: https://mefi.io
-        platform_commission:
-          type: string
-          format: float
-          minimum: 0.00
-          maximum: 10.00
-          example: 5.75
-          description: |
-            - Percentage of fees taken from the platform when a transaction is concluded
-            - If the value of `platform_address` is not specified, no fee is paid.
-        platform_address:
-          type: string
-          format: Metacoin address
-          description: |
-            - Metacoin address to receive commission if the value of platform_commission is greater than 0
-        regdate:
-          type: integer
-          format: int64
-        sell_date:
-          type: integer
-          format: int64
-          description: Time the transaction was completed
-        cancel_date:
-          type: integer
-          format: int64
-          description: DEX registration cancellation time
-        sell_price:
-          type: string
-          format: integer
-          description: |
-            - It has no meaning unless the value of `job_type` is `mrc010_sell` or `mrc010_buy`.
-            - The amount of tokens required to purchase the token number `mrc010` by `min_trade_amount`.
-        selll_token:
-          type: string
-          format: integer
-          description: |
-            - It has no meaning unless the value of `job_type` is `mrc010_sell` or `mrc010_buy`.
-            - ID of the token to be paid for at the time of purchase.
-        buy_price:
-          type: string
-          format: integer
-          description: |
-            - It has no meaning unless the value of `job_type` is `mrc010_reqsell` or `mrc010_acceptreqsell`.
-            - The amount of tokens you will receive when you sell the token number `mrc010` by `min_trade_amount`.
-        buy_token:
-          type: string
-          format: integer
-          description: |
-            - It has no meaning unless the value of `job_type` is `mrc010_reqsell` or `mrc010_acceptreqsell`.
-            - Token ID `mrc010` The ID of the token to be sold and received.
-        buy_price_total:
-          type: string
-          format: integer
-          description: |
-            - Balance of the amount paid by DEX creators to purchase tokens.
-            - This is the amount the DEX creator will receive if they cancel the sale request.
+          description: item data
     MRC400:
       type: object
       properties:
-        owner:
-          type: string
-          example: MTPBF7OHamYp0luagfi2RcleKFyQf2qU9d530ee2
-        name:
-          type: string
-          example: MRC400 Project
-        url:
-          type: string
-          example: https://metacoin.mrc400project.com/
-        image_url:
-          type: string
-          example: https://metacoin.mrc400project.com/image/logo.png
         allow_token:
           type: string
           format: int32
-          example: 0
+          description: |
+            Only designated tokens and Metacoin (Token ID: 0) can be used for MRC401 token auctions and sales under this MRC400 token
         category:
           type: string
-          example: PFP type NFT
-        data:
-          type: string
-        description:
-          type: string
-          example: This project is MRC400 base PFP
-        item_image_url:
-          type: string
-          example: https://metacoin.mrc400project.com/image/mrc401/{id}
-        item_url:
-          type: string
-          example: https://metacoin.mrc400project.com/mrc401/{id}
-        socialmedia:
-          type: string
-          example: {"facebook" : "https://facebook.com/demo", "homepage":"https://homepage.com"}
-        partner:
-          type: string
-          format: json_encode
-          example: {"MTrqP2QkpBgBfNwgXsyGk3aWKtt3lQp369797277" : "partner", "MTL97iMddTPADBUethWmlIzx3e6mawn724e865aa":"creator","MT7LMaOd9bREtTUP23m0Ge83yA7VNzhUf0399772":"saller"}
+          description: This value refers to the classification in which the MRC400 token is used.  It does not affect Metacoin or Metacoin-based blockchains.
         createdate:
           type: integer
           format: UnixTimestamp (UTC)
           description: MRC400 Token generation time.
+        data:
+          type: string
+        description:
+          type: string
+        image_url:
+          type: string
+        name:
+          type: string
+        owner:
+          type: string
+        url:
+          type: string
+        item_image_url:
+          type: string
+        item_url:
+          type: string
     MRC401:
       type: object
       properties:
@@ -4414,43 +6323,40 @@ components:
             - Auction : The final trading method is an auction.
             - Sell : The final trading method is Sell/Buy.
             - "" : It has never been auctioned or sold.
-    Reserve:
+
+    MRC800:
       type: object
+      required:
+        - creator
+        - name
+        - totalsupply
+        - is_transfer
       properties:
-        unlockdate:
-          type: integer
-          format: UnixTimestamp (UTC)
-          description: |
-            - When transfer is allowed
-            - Transfer is possible after the designated time
-        address:
+        creator:
+          description: Point Creater
           type: string
           format: Metacoin Address
-          description: Address to receive token
-        value:
+        name:
+          description: Point name
+          type: string
+          minLength: 1
+          maxLength: 32
+        totalsupply:
+          description: Point Total count
           type: string
           format: integer
-          description: Quantity to receive when creating token
-    Tier:
-      type: object
-      properties:
-        startdate:
-          type: integer
-          format: UnixTimestamp (UTC)
-        enddate:
-          type: integer
-          format: UnixTimestamp (UTC)
-        supply:
+        is_transfer:
+          description: |
+            Configure Transferable
+            - "0": Not transferable
+            - "1": Transferable
           type: string
-        rate:
-          type: integer
-          description: Quantity of tokens available for 1 Metacoin
-        name:
+          format: integer
+          enum:
+            - "0"
+            - "1"
+        data:
+          description: Point data
           type: string
-        investormin:
-          type: string
-          format: string
-          description: investor minimum capacity
-        remainamount:
-          type: string
-          format: string
+          minLength: 0
+          maxLength: 2048

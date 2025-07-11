@@ -4,7 +4,7 @@ description: MRC-402 is Token like NFT
 
 # MRC402(NFT)
 
-## Support mixed assets for NFT. <a href="#52d1" id="52d1"></a>
+## Support mixed assets for NFT. <a href="#id-52d1" id="id-52d1"></a>
 
 MRC402 supports the mixed assets and shares some portion of commission to a copyright holder or a profit share holder on Sales/Auction.
 
@@ -12,7 +12,7 @@ It supports to create Token/MRC402 and Mint and Burn by QR Code or Deeplink on M
 
 Here is the MRC402’s main features.
 
-### Mixed Assets <a href="#2d69" id="2d69"></a>
+### Mixed Assets <a href="#id-2d69" id="id-2d69"></a>
 
 You can create the NFT with combining several tokens not only one token.
 
@@ -21,7 +21,7 @@ You can create the NFT with combining several tokens not only one token.
 * It’s valued of 5 Metacoin, 10 JamesToken on 1 JamesNFT.
 * If a user who has got JameNFT melt it or James who create the JamesNFT burn it, you can get the amount of melted or burned \* 5 Metacoin, 10 JemaesToken(MRC010).
 
-### Copyright Information <a href="#63b5" id="63b5"></a>
+### Copyright Information <a href="#id-63b5" id="id-63b5"></a>
 
 NFT is usually used in work of art.
 
@@ -43,11 +43,11 @@ Mint will increase the total issuance and can only be issued by issuer.
 
 If there is an initial asset, it will be reduced from the creator’s wallet by the amount of mint \* initial asset.
 
-### Transfer <a href="#1ac9" id="1ac9"></a>
+### Transfer <a href="#id-1ac9" id="id-1ac9"></a>
 
 MRC402 can send multiple NFTs on transaction not like MRC401.
 
-### Melt <a href="#8734" id="8734"></a>
+### Melt <a href="#id-8734" id="id-8734"></a>
 
 Users who has got NFT can do the Melting.
 
@@ -94,47 +94,46 @@ It supports multiple copyright holders and give stable profits on the Metacoin N
 
 It helps you to be more creative.
 
-{% swagger src="../../.gitbook/assets/api.yaml" path="/mrc402" method="post" %}
+{% openapi src="../../.gitbook/assets/api.yaml" path="/mrc402" method="post" %}
 [api.yaml](../../.gitbook/assets/api.yaml)
-{% endswagger %}
+{% endopenapi %}
 
-{% swagger src="../../.gitbook/assets/api.yaml" path="/mrc402/{mrc402id}" method="get" %}
+{% openapi src="../../.gitbook/assets/api.yaml" path="/mrc402/{mrc402id}" method="get" %}
 [api.yaml](../../.gitbook/assets/api.yaml)
-{% endswagger %}
+{% endopenapi %}
 
-{% swagger src="../../.gitbook/assets/api.yaml" path="/mrc402/transfer/{mrc402id}" method="post" %}
+{% openapi src="../../.gitbook/assets/api.yaml" path="/mrc402/transfer/{mrc402id}" method="post" %}
 [api.yaml](../../.gitbook/assets/api.yaml)
-{% endswagger %}
+{% endopenapi %}
 
-{% swagger src="../../.gitbook/assets/api.yaml" path="/mrc402/sell/{mrc402id}" method="post" %}
+{% openapi src="../../.gitbook/assets/api.yaml" path="/mrc402/sell" method="post" %}
 [api.yaml](../../.gitbook/assets/api.yaml)
-{% endswagger %}
+{% endopenapi %}
 
-{% swagger src="../../.gitbook/assets/api.yaml" path="/mrc402/unsell/{mrc402_dex_id}" method="post" %}
+{% openapi src="../../.gitbook/assets/api.yaml" path="/mrc402/unsell" method="post" %}
 [api.yaml](../../.gitbook/assets/api.yaml)
-{% endswagger %}
+{% endopenapi %}
 
-{% swagger src="../../.gitbook/assets/api.yaml" path="/mrc402/buy/{mrc402id}" method="post" %}
+{% openapi src="../../.gitbook/assets/api.yaml" path="/mrc402/buy/{mrc402id}" method="post" %}
 [api.yaml](../../.gitbook/assets/api.yaml)
-{% endswagger %}
+{% endopenapi %}
 
-{% swagger src="../../.gitbook/assets/api.yaml" path="/mrc402/melt/{mrc402id}" method="post" %}
+{% openapi src="../../.gitbook/assets/api.yaml" path="/mrc402/melt/{mrc402id}" method="post" %}
 [api.yaml](../../.gitbook/assets/api.yaml)
-{% endswagger %}
+{% endopenapi %}
 
-{% swagger src="../../.gitbook/assets/api.yaml" path="/mrc402/auction/{mrc402id}" method="post" %}
+{% openapi src="../../.gitbook/assets/api.yaml" path="/mrc402/auction" method="post" %}
 [api.yaml](../../.gitbook/assets/api.yaml)
-{% endswagger %}
+{% endopenapi %}
 
-{% swagger src="../../.gitbook/assets/api.yaml" path="/mrc402/unauction/{mrc402_dex_id}" method="post" %}
+{% openapi src="../../.gitbook/assets/api.yaml" path="/mrc402/unauction" method="post" %}
 [api.yaml](../../.gitbook/assets/api.yaml)
-{% endswagger %}
+{% endopenapi %}
 
-{% swagger src="../../.gitbook/assets/api.yaml" path="/mrc402/bid/{mrc402id}" method="post" %}
+{% openapi src="../../.gitbook/assets/api.yaml" path="/mrc402/bid/{mrc402id}" method="post" %}
 [api.yaml](../../.gitbook/assets/api.yaml)
-{% endswagger %}
+{% endopenapi %}
 
-{% swagger src="../../.gitbook/assets/api.yaml" path="/mrc402/auctionfinish/{mrc402id}" method="get" %}
+{% openapi src="../../.gitbook/assets/api.yaml" path="/mrc402/auctionfinish/{mrc402id}" method="get" %}
 [api.yaml](../../.gitbook/assets/api.yaml)
-{% endswagger %}
-
+{% endopenapi %}
