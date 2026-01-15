@@ -12,3 +12,4 @@
   * [Token](reference/rest-api-reference/token.md)
   * [MRC400(NFT)](reference/rest-api-reference/mrc400-nft.md)
   * [MRC402(NFT)](reference/rest-api-reference/mrc402-nft.md)
+  * [OpenAPI(Yaml format)](https://raw.githubusercontent.com/MetacoinPlatform/metacoin-api/refs/heads/master/api.yaml)
